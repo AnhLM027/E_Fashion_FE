@@ -1,0 +1,52 @@
+.products-sidebar {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Sticky desktop */
+@media (min-width: 1024px) {
+  .products-sidebar {
+    position: sticky;
+    top: 96px;
+  }
+}
+
+.sidebar-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-group h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.filter-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.filter-group input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+}
