@@ -11,7 +11,7 @@ const tabs = [
   { id: "sale", label: "Đang giảm giá" },
 ];
 
-export function FeaturedProducts() {
+export function FeaturedProducts({ embedded = false }: { embedded?: boolean }) {
   const [activeTab, setActiveTab] = useState("new");
 
   const { bestSellers, newArrivals, featured, loading } = useProducts();
@@ -41,8 +41,15 @@ export function FeaturedProducts() {
   }
 
   return (
-    <section className="border-y border-neutral-200 bg-white py-10">
-      <div className="container mx-auto max-w-400 px-6">
+    <section
+      className={cn(
+        "py-16",
+        embedded
+          ? "bg-transparent border-none"
+          : "border-y border-neutral-200 bg-white",
+      )}
+    >
+      <div className={cn(embedded ? "" : "container mx-auto max-w-7xl px-6")}>
         {/* Header */}
         <div className="mb-14 flex flex-col items-center justify-between gap-8 md:flex-row">
           <div>

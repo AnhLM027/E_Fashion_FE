@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from "react";
-import { Paperclip, Upload, Image } from "lucide-react";
+import { Paperclip, Upload, Image, Search } from "lucide-react";
 import {
   connectChat,
   subscribeSession,
@@ -47,10 +47,13 @@ export default function AdminChatsPage() {
 
   const selectedSessionRef = useRef<AdminChatSession | null>(null);
 
+  const [searchSession, setSearchSession] = useState("");
+
   /* ================= LOAD SESSIONS ================= */
 
   const loadSessions = async () => {
     const res = await adminChatApi.getActiveSessions();
+    // console.log("SESSIONS:", res);
     setSessions(res);
   };
 
@@ -137,9 +140,30 @@ export default function AdminChatsPage() {
 
     sessionSubRef.current?.unsubscribe();
 
-    sessionSubRef.current = subscribeSession(selectedSession.id, (msg) => {
-      setMessages((prev) => [...prev, msg]);
-    });
+    sessionSubRef.current = subscribeSession(
+      selectedSession.id,
+      async (msg) => {
+        if (msg.type === "READ") {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.senderType === "AGENT" ? { ...m, isRead: true } : m,
+            ),
+          );
+          return;
+        }
+
+        setMessages((prev) => [...prev, msg]);
+
+        if (msg.senderType === "AGENT") {
+          try {
+            await adminChatApi.markAsRead(selectedSession.id);
+            loadSessions();
+          } catch (err) {
+            console.error("Realtime markAsRead failed", err);
+          }
+        }
+      },
+    );
 
     return () => {
       sessionSubRef.current?.unsubscribe();
@@ -163,6 +187,14 @@ export default function AdminChatsPage() {
 
     if (clientRef.current?.connected) {
       sessionSubRef.current = subscribeSession(session.id, (msg) => {
+        if (msg.type === "READ") {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.senderType === "AGENT" ? { ...m, isRead: true } : m,
+            ),
+          );
+          return;
+        }
         setMessages((prev) => [...prev, msg]);
       });
     }
@@ -353,8 +385,60 @@ export default function AdminChatsPage() {
     }
   };
 
+  const renderSessionPreview = (session: AdminChatSession) => {
+    if (!session.lastMessage) return "Người dùng mới được kết nối";
+
+    switch (session.lastMessageType) {
+      case "IMAGE":
+        return "📷 Hình ảnh";
+
+      case "PRODUCT":
+        return "🛍️ Sản phẩm";
+
+      case "SYSTEM":
+        return session.lastMessage;
+
+      default:
+        return session.lastMessage;
+    }
+  };
+
+  const lastAgentMessageIndex = [...messages]
+    .reverse()
+    .findIndex((m) => m.senderType === "AGENT");
+
+  const lastAgentIndex =
+    lastAgentMessageIndex === -1
+      ? -1
+      : messages.length - 1 - lastAgentMessageIndex;
+
+  const filteredSessions = useMemo(() => {
+    let data = [...sessions];
+
+    if (searchSession.trim()) {
+      const keyword = searchSession.toLowerCase();
+
+      data = data.filter(
+        (s) =>
+          s.fullName?.toLowerCase().includes(keyword) ||
+          s.email?.toLowerCase().includes(keyword),
+      );
+    }
+
+    return data.sort((a, b) => {
+      if (b.unreadCount !== a.unreadCount) {
+        return b.unreadCount - a.unreadCount;
+      }
+
+      const timeA = new Date(a.lastTime ?? a.createdAt).getTime();
+      const timeB = new Date(b.lastTime ?? b.createdAt).getTime();
+
+      return timeB - timeA;
+    });
+  }, [sessions, searchSession]);
+
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl overflow-hidden shadow-2xl">
+    <div className="flex h-145 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl overflow-hidden shadow-2xl">
       {/* ================= LEFT SIDEBAR ================= */}
       <div className="w-[380px] bg-white/80 backdrop-blur-xl border-r flex flex-col">
         {/* Header */}
@@ -365,9 +449,25 @@ export default function AdminChatsPage() {
           </p>
         </div>
 
+        <div className="px-4 pb-4 pt-6">
+          <div className="relative">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+
+            <input
+              value={searchSession}
+              onChange={(e) => setSearchSession(e.target.value)}
+              placeholder="Search name or email..."
+              className="w-full pl-9 pr-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-black"
+            />
+          </div>
+        </div>
+
         {/* Session List */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-2">
-          {sortedSessions.map((session) => {
+          {filteredSessions.map((session) => {
             const isActive = selectedSession?.id === session.id;
             const displayName =
               session.fullName?.trim() ||
@@ -428,13 +528,18 @@ export default function AdminChatsPage() {
                       isActive ? "text-white/80" : "text-gray-500"
                     }`}
                   >
-                    {session.lastMessage}
+                    {renderSessionPreview(session)}
                   </div>
                 </div>
 
                 {session.unreadCount > 0 && !isActive && (
                   <div className="bg-black text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">
                     {session.unreadCount}
+                  </div>
+                )}
+
+                {!session.lastMessage && !isActive && (
+                  <div className="bg-blue-800 text-white text-xs w-2.5 h-2.5 rounded-full flex items-center justify-center">
                   </div>
                 )}
               </div>
@@ -571,6 +676,15 @@ export default function AdminChatsPage() {
 
                         <div className="text-[11px] mt-2 opacity-60 text-right">
                           {formatTime(msg.createdAt)}
+
+                          {/* Hiển thị Đã xem */}
+                          {isAgent &&
+                            index === lastAgentIndex &&
+                            msg.isRead && (
+                              <div className="text-[10px] text-gray-400 mt-1">
+                                Đã xem
+                              </div>
+                            )}
                         </div>
                       </div>
                     </div>
@@ -610,7 +724,7 @@ export default function AdminChatsPage() {
             {/* ===== INPUT AREA ===== */}
             <div className="px-8 py-6 bg-white border-t">
               {showProductDropdown && productResults.length > 0 && (
-                <div className="absolute bottom-24 left-8 right-8 bg-white shadow-2xl rounded-2xl max-h-72 overflow-y-auto z-50 border">
+                <div className="absolute bottom-30 left-150 right-8 bg-white shadow-2xl rounded-2xl w-150 max-h-72 overflow-y-auto z-50 border">
                   {productResults.map((product) => (
                     <div
                       key={product.id}

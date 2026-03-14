@@ -51,6 +51,15 @@ export interface UpdatePasswordRequest {
   newPassword: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
 export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;

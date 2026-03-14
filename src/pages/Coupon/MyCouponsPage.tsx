@@ -148,7 +148,15 @@ export default function MyCouponsPage() {
             const now = new Date();
             const isExpired = c.endDate && new Date(c.endDate) < now;
 
-            const status = c.isUsed ? "used" : isExpired ? "expired" : "active";
+            const isOutOfUsage = c.usageLimit === 0;
+
+            const status = c.isUsed
+              ? "used"
+              : isExpired
+                ? "expired"
+                : isOutOfUsage
+                  ? "out"
+                  : "active";
 
             return (
               <div
@@ -190,7 +198,16 @@ export default function MyCouponsPage() {
                     )}
 
                     {c.usageLimit !== undefined && (
-                      <p>Còn lại: {c.usageLimit}</p>
+                      <p>
+                        Còn lại:{" "}
+                        {c.usageLimit === 0 ? (
+                          <span className="text-red-600 font-medium">
+                            Hết lượt sử dụng
+                          </span>
+                        ) : (
+                          c.usageLimit
+                        )}
+                      </p>
                     )}
                   </div>
 
@@ -209,6 +226,11 @@ export default function MyCouponsPage() {
                     {status === "expired" && (
                       <span className="text-xs px-3 py-1 bg-neutral-200 text-neutral-600 rounded">
                         Hết hạn
+                      </span>
+                    )}
+                    {status === "out" && (
+                      <span className="text-xs px-3 py-1 bg-neutral-200 text-neutral-600 rounded">
+                        Hết lượt sử dụng
                       </span>
                     )}
 

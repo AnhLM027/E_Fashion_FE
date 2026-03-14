@@ -134,10 +134,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await fetchProfile();
         setSessionExpired(false);
       } catch (err: any) {
-        const message =
-          err?.response?.data?.message || err?.message || "Login failed";
-
-        setError(message);
+        if (err.response?.status === 401) {
+          setError("Sai tài khoản hoặc mật khẩu");
+        } else {
+          setError("Đăng nhập thất bại");
+        }
         throw err;
       } finally {
         setIsLoading(false);

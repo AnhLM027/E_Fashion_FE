@@ -20,6 +20,8 @@ export const ROUTES = {
   LOGIN: "/login",
   REGISTER: "/register",
   FORGOT_PASSWORD: "/forgot_password",
+  RESET_PASSWORD: "/reset_password",
+  ACCEPT_ACCOUNT: "/accept_account",
 
   // ================= CATEGORY MANAGEMENT =================
   CATEGORIES: "/categories",

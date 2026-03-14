@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import {
   connectChat,
   subscribeSession,
@@ -14,6 +15,8 @@ import {
   ChatMessageType,
 } from "@/features/chat/types/chat.types";
 
+import type { RootState } from "@/store/store";
+
 const QUICK_MESSAGES = [
   "Tôi muốn hỏi về đơn hàng",
   "Shop có sản phẩm mới không?",
@@ -22,6 +25,7 @@ const QUICK_MESSAGES = [
 ];
 
 export default function ChatWidget() {
+  const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -41,19 +45,40 @@ export default function ChatWidget() {
   /* ================= LOAD HISTORY ================= */
 
   useEffect(() => {
-    if (!open || sessionId) return;
-
-    const initSession = async () => {
+    const init = async () => {
       try {
-        const id = await chatApi.createSession();
-        setSessionId(id);
+        // 1️⃣ Kiểm tra có session sẵn không
+        const session = await chatApi.getSession(isLoggedIn);
+
+        if (!session && isLoggedIn) {
+          const newId = await chatApi.createSession(true);
+          setSessionId(newId);
+          return;
+        }
+
+        if (session) {
+          setSessionId(session.sessionId);
+          setUnreadCount(session.unreadCount);
+        }
       } catch (error) {
-        console.error("Create session failed", error);
+        console.error("Init session failed", error);
       }
     };
 
+    init();
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (isLoggedIn) return; // 🔥 guest only
+    if (!open || sessionId) return;
+
+    const initSession = async () => {
+      const id = await chatApi.createSession(false);
+      setSessionId(id);
+    };
+
     initSession();
-  }, [open]);
+  }, [open, isLoggedIn]);
 
   const createLocalMessage = (
     sessionId: string,
@@ -108,9 +133,37 @@ export default function ChatWidget() {
     let subscription: any = null;
 
     client.onConnect = () => {
-      subscription = subscribeSession(sessionId, (msg: any) => {
+      subscription = subscribeSession(sessionId, async (msg: any) => {
+        if (msg.type === "READ") {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.senderType === ChatSenderType.USER ? { ...m, isRead: true } : m,
+            ),
+          );
+          return;
+        }
+        // console.log("ADMIN RECEIVED:", msg);
         setMessages((prev) => [...prev, msg]);
-        setUnreadCount((prev) => (open ? 0 : prev + 1));
+        // console.log("SOCKET MSG:", msg);
+
+        // Nếu chat đang mở → mark ngay backend
+        if (open) {
+          // console.log("READ");
+          await chatApi.markAsRead(sessionId);
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.senderType === ChatSenderType.AGENT
+                ? { ...m, isRead: true }
+                : m,
+            ),
+          );
+          setUnreadCount(0);
+        } else {
+          // Chỉ tăng nếu tin từ AGENT
+          if (msg.senderType === ChatSenderType.AGENT) {
+            setUnreadCount((prev) => prev + 1);
+          }
+        }
       });
     };
 
@@ -136,10 +189,25 @@ export default function ChatWidget() {
   }, [messages]);
 
   useEffect(() => {
-    if (open) {
-      setUnreadCount(0);
-      scrollToBottom(false);
-    }
+    if (!open || !sessionId) return;
+
+    const markRead = async () => {
+      try {
+        // console.log("READ");
+        await chatApi.markAsRead(sessionId);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.senderType === ChatSenderType.USER ? { ...m, isRead: true } : m,
+          ),
+        );
+        setUnreadCount(0);
+      } catch (err) {
+        console.error("Mark as read failed", err);
+      }
+    };
+
+    markRead();
+    scrollToBottom(false);
   }, [open]);
 
   useEffect(() => {
@@ -237,17 +305,6 @@ export default function ChatWidget() {
     }
   };
 
-  const isToday = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-
-    return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    );
-  };
-
   const renderMessageContent = (m: any) => {
     switch (m.messageType) {
       case ChatMessageType.TEXT:
@@ -334,20 +391,59 @@ export default function ChatWidget() {
     }
   };
 
+  const lastUserMessageIndex = [...messages]
+    .reverse()
+    .findIndex((m) => m.senderType === ChatSenderType.USER);
+
+  const lastUserIndex =
+    lastUserMessageIndex === -1
+      ? -1
+      : messages.length - 1 - lastUserMessageIndex;
+
   return (
     <>
-      {/* Floating Button */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-[9999] bg-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition"
-      >
-        💬
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
+      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end gap-3">
+        {!open && (
+          <>
+            {/* ZALO */}
+            <a
+              href="https://zalo.me/0901234567"
+              target="_blank"
+              className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition"
+            >
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/9/91/Icon_of_Zalo.svg"
+                className="w-6 h-6"
+              />
+            </a>
+
+            {/* MESSENGER */}
+            <a
+              href="https://www.facebook.com/minhanh.357564/"
+              target="_blank"
+              className="w-12 h-12 bg-blue-600 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition"
+            >
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/b/be/Facebook_Messenger_logo_2020.svg"
+                className="w-5 h-5"
+              />
+            </a>
+          </>
         )}
-      </button>
+
+        {/* CHAT BUTTON */}
+        <button
+          onClick={() => setOpen(!open)}
+          className="relative bg-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition"
+        >
+          💬
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </button>
+      </div>
 
       {/* Chat Box */}
       {open && (
@@ -407,11 +503,18 @@ export default function ChatWidget() {
                         <>
                           {renderMessageContent(m)}
 
-                          <div className="text-[10px] mt-1 opacity-60">
+                          <div className="text-[10px] mt-1 opacity-60 text-right">
                             {new Date(m.createdAt).toLocaleTimeString("vi-VN", {
                               hour: "2-digit",
                               minute: "2-digit",
                             })}
+
+                            {/* Hiển thị Đã xem */}
+                            {isUser && i === lastUserIndex && m.isRead && (
+                              <div className="text-[10px] text-gray-400 mt-0.5">
+                                Đã xem
+                              </div>
+                            )}
                           </div>
                         </>
                       )}

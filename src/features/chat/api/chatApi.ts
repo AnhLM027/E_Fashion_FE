@@ -12,15 +12,20 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+export interface ChatSession {
+  sessionId: string;
+  status: string;
+  unreadCount: number;
+  lastContent?: string;
+  lastMessageType?: string;
+  lastTime?: string;
+}
+
 export const chatApi = {
-  // ===== Tạo hoặc lấy session ACTIVE =====
-  createSession: async (): Promise<string> => {
+  createSession: async (isLoggedIn: boolean): Promise<string> => {
     let guestId: string | null = null;
 
-    // Nếu chưa login (không có token) → tạo guestId
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
+    if (!isLoggedIn) {
       guestId = localStorage.getItem("guestId");
 
       if (!guestId) {
@@ -29,15 +34,30 @@ export const chatApi = {
       }
     }
 
-    const res = await axiosClient.post(
+    return axiosClient.post(
       "/api/chat/session",
       null,
       {
         params: guestId ? { guestId } : {},
       }
     );
+  },
 
-    return res;
+  getSession: async (isLoggedIn: boolean): Promise<ChatSession | null> => {
+    let guestId: string | null = null;
+
+    if (!isLoggedIn) {
+      guestId = localStorage.getItem("guestId");
+
+      if (!guestId) {
+        // chưa từng chat -> không tạo mới ở đây
+        return null;
+      }
+    }
+
+    return axiosClient.get("/api/chat/session", {
+      params: guestId ? { guestId } : {},
+    });
   },
 
   uploadImage: async (file: File): Promise<string> => {
@@ -60,6 +80,12 @@ export const chatApi = {
     sessionId: string
   ): Promise<ChatMessage[]> => {
     return axiosClient.get(`/api/chat/${sessionId}/messages`);
+  },
+
+  markAsRead: async (sessionId: string): Promise<void> => {
+    return axiosClient.post(
+      `/api/chat/sessions/${sessionId}/read`
+    );
   },
 
   mergeGuestSession: async (guestId: string) => {

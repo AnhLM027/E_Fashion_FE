@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   ChevronDown,
   TicketPercent,
+  ChevronRight,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
@@ -90,30 +91,69 @@ export function Header() {
     node: Category;
     level?: number;
   }) => {
+    const [open, setOpen] = useState(level <= 0);
+    const hasChildren = node.children && node.children.length > 0;
+
     return (
       <div
         className={`${level > 0 ? "ml-4 mt-2 border-l border-zinc-100 pl-4" : ""}`}
       >
-        <Link
-          to={`/products/category/${node.slug}`}
-          onClick={() => setActiveMega(null)}
-          className={`
-            block transition-all duration-200
-            ${level === 0 ? "font-bold uppercase text-[13px] tracking-wider mb-4 pb-2 border-b border-zinc-100 text-zinc-900" : ""}
-            ${level === 1 ? "font-semibold text-zinc-700 hover:text-indigo-600 text-[14px]" : ""}
-            ${level >= 2 ? "text-[13px] text-zinc-500 hover:text-zinc-900 hover:translate-x-1" : ""}
+        <div className="flex items-center justify-between group">
+          <Link
+            to={`/products/category/${node.slug}`}
+            onClick={() => setActiveMega(null)}
+            className={`
+            block transition-all duration-200 flex-1
+            ${
+              level === 0
+                ? "font-bold uppercase text-[13px] tracking-wider mb-2 pb-1 border-b border-zinc-100 text-zinc-900"
+                : ""
+            }
+            ${
+              level === 1
+                ? "font-semibold text-zinc-700 hover:text-indigo-600 text-[14px]"
+                : ""
+            }
+            ${
+              level >= 2
+                ? "text-[13px] text-zinc-500 hover:text-zinc-900 hover:translate-x-1"
+                : ""
+            }
           `}
-        >
-          {node.name}
-        </Link>
+          >
+            {node.name}
+          </Link>
 
-        {node.children?.length > 0 && (
-          <div className="space-y-1.5 mt-2">
-            {node.children.map((child) => (
-              <CategoryNode key={child.id} node={child} level={level + 1} />
-            ))}
-          </div>
-        )}
+          {hasChildren && (
+            <button
+              onClick={() => setOpen(!open)}
+              className="p-1 text-zinc-400 hover:text-zinc-900"
+            >
+              <ChevronDown
+                size={14}
+                className={`transition-transform duration-200 ${
+                  open ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+          )}
+        </div>
+
+        <AnimatePresence>
+          {hasChildren && open && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="space-y-1.5 mt-2 overflow-hidden"
+            >
+              {node.children.map((child) => (
+                <CategoryNode key={child.id} node={child} level={level + 1} />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   };

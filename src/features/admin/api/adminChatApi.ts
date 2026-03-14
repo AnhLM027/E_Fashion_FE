@@ -10,6 +10,7 @@ export interface AdminChatSession {
     status: string;
     unreadCount: number;
     lastMessage: string | null;
+    lastMessageType: "TEXT" | "IMAGE" | "FILE" | "PRODUCT" | "ORDER" | "SYSTEM";
     lastTime: string | null;
 }
 
@@ -20,6 +21,7 @@ export interface AdminChatMessage {
     messageType: "TEXT" | "IMAGE" | "FILE" | "PRODUCT" | "ORDER" | "SYSTEM";
     metadata?: any;
     content: string;
+    isRead: boolean;
     createdAt: string;
 }
 

@@ -7,6 +7,7 @@ import type {
   RegisterResponse,
   UpdateProfileRequest,
   UpdatePasswordRequest,
+  ResetPasswordRequest,
 } from "../types/auth.type";
 
 export const authApi = {
@@ -16,6 +17,12 @@ export const authApi = {
 
   register: async (data: RegisterRequest): Promise<RegisterResponse> => {
     return axiosClient.post(API_ENDPOINTS.AUTH.REGISTER, data);
+  },
+
+  acceptAccount: async (token: string): Promise<void> => {
+    return axiosClient.post(API_ENDPOINTS.AUTH.ACCEPT_ACCOUNT, null, {
+      params: { token },
+    });
   },
 
   profile: async (): Promise<LoginResponse["user"]> => {
@@ -43,5 +50,15 @@ export const authApi = {
 
   refreshToken: async (): Promise<void> => {
     return axiosClient.post(API_ENDPOINTS.AUTH.REFRESH);
+  },
+
+  forgotPassword: async (email: string): Promise<void> => {
+    return axiosClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, null, {
+      params: { email },
+    });
+  },
+
+  resetPassword: async (data: ResetPasswordRequest): Promise<void> => {
+    return axiosClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, data);
   },
 };

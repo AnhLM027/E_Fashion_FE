@@ -1,12 +1,13 @@
 import React, { useState, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { ROUTES } from "@/config/routes";
 import { validators } from "@/utils/validators";
 
-export const RegisterForm: React.FC = () => {
+type Props = {
+  onSuccess?: () => void;
+};
+
+export const RegisterForm: React.FC<Props> = ({ onSuccess }) => {
   const { register, isLoading, error, clearError } = useAuth();
-  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     email: "",
@@ -41,7 +42,9 @@ export const RegisterForm: React.FC = () => {
       errors.password = "Mật khẩu tối thiểu 6 ký tự";
     }
 
-    if (form.password !== form.confirmPassword) {
+    if (!validators.required(form.confirmPassword)) {
+      errors.confirmPassword = "Vui lòng xác nhận mật khẩu";
+    } else if (form.password !== form.confirmPassword) {
       errors.confirmPassword = "Mật khẩu xác nhận không khớp";
     }
 
@@ -61,7 +64,7 @@ export const RegisterForm: React.FC = () => {
         password: form.password,
       });
 
-      navigate(ROUTES.LOGIN, { replace: true });
+      onSuccess?.(); // báo thành công cho RegisterPage
     } catch {}
   };
 
@@ -73,10 +76,12 @@ export const RegisterForm: React.FC = () => {
         </div>
       )}
 
+      {/* EMAIL */}
       <div>
         <label className="text-sm text-gray-600">Email</label>
+
         <input
-          type="text"
+          type="email"
           value={form.email}
           disabled={isLoading}
           onChange={handleChange("email")}
@@ -89,13 +94,16 @@ export const RegisterForm: React.FC = () => {
               : "border-gray-300 focus:ring-black"
           }`}
         />
+
         {validationErrors.email && (
           <p className="mt-1 text-xs text-red-500">{validationErrors.email}</p>
         )}
       </div>
 
+      {/* PASSWORD */}
       <div>
         <label className="text-sm text-gray-600">Mật khẩu</label>
+
         <input
           type="password"
           value={form.password}
@@ -110,6 +118,7 @@ export const RegisterForm: React.FC = () => {
               : "border-gray-300 focus:ring-black"
           }`}
         />
+
         {validationErrors.password && (
           <p className="mt-1 text-xs text-red-500">
             {validationErrors.password}
@@ -117,8 +126,10 @@ export const RegisterForm: React.FC = () => {
         )}
       </div>
 
+      {/* CONFIRM PASSWORD */}
       <div>
         <label className="text-sm text-gray-600">Xác nhận mật khẩu</label>
+
         <input
           type="password"
           value={form.confirmPassword}
@@ -133,6 +144,7 @@ export const RegisterForm: React.FC = () => {
               : "border-gray-300 focus:ring-black"
           }`}
         />
+
         {validationErrors.confirmPassword && (
           <p className="mt-1 text-xs text-red-500">
             {validationErrors.confirmPassword}
@@ -140,6 +152,7 @@ export const RegisterForm: React.FC = () => {
         )}
       </div>
 
+      {/* BUTTON */}
       <button
         type="submit"
         disabled={isLoading}

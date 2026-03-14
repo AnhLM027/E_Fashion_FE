@@ -18,6 +18,10 @@ import Home from "./pages/Home/Home";
 
 import LoginPage from "./pages/Auth/LoginPage";
 import RegisterPage from "./pages/Auth/RegisterPage";
+import ForgotPasswordPage from "./pages/Auth/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/Auth/ResetPasswordPage";
+import AcceptAccountPage from "./pages/Auth/AcceptAccountPage";
+
 import ProductsPage from "./pages/Product/ProductsPage";
 import ProductDetailPage from "./pages/Product/ProductDetailPage";
 import CartPage from "./pages/Cart/CartPage";
@@ -45,6 +49,11 @@ import AdminCouponsPage from "./pages/Admin/Coupons/AdminCouponsPage";
 // import AdminReviewsPage from "./pages/Admin/Reviews/AdminReviewsPage";
 import AdminChatsPage from "./pages/Admin/Chats/AdminChatsPage";
 // import AdminKnowledgeBasePage from "./pages/Admin/KnowledgeBase/AdminKnowledgeBasePage";
+
+import AboutPage from "@/pages/Supports/AboutPage";
+import ContactPage from "@/pages/Supports/ContactPage";
+import ShippingPolicyPage from "@/pages/Supports/ShippingPolicyPage";
+import ReturnPolicyPage from "@/pages/Supports/ReturnPolicyPage";
 
 function App() {
   const { isAuthInitialized } = useAuth();
@@ -81,12 +90,20 @@ function App() {
           />
           <Route path={ROUTES.WISHLIST} element={<WishlistPage />} />
           <Route path={ROUTES.MY_COUPONS} element={<MyCouponsPage />} />
+
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/shipping" element={<ShippingPolicyPage />} />
+          <Route path="/returns" element={<ReturnPolicyPage />} />
         </Route>
 
         {/* ===== AUTH LAYOUT ===== */}
         <Route element={<AuthLayout />}>
           <Route path={ROUTES.LOGIN} element={<LoginPage />} />
           <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+          <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+          <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
+          <Route path={ROUTES.ACCEPT_ACCOUNT} element={<AcceptAccountPage />} />
         </Route>
 
         <Route element={<RequireAdmin />}>

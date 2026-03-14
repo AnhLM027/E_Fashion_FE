@@ -10,6 +10,7 @@ import { useCategoryTree } from "@/hooks/useCategoryTree";
 import { useProductDetail } from "@/features/products/hooks/useProductDetail";
 import { useProducts } from "@/features/products/hooks/useProducts";
 import { ProductCard } from "@/features/products/components/ProductCard";
+import { FeaturedProducts } from "@/components/home/featured-products";
 import { addCartItem } from "@/features/cart/slices/cartSlice";
 import {
   addToWishlist,
@@ -66,6 +67,8 @@ export default function ProductDetailPage() {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
+
+  const [wishlistIds, setWishlistIds] = useState<Set<string>>(new Set());
 
   const [selectedVariant, setSelectedVariant] = useState<
     (typeof variants)[0] | null
@@ -157,6 +160,11 @@ export default function ProductDetailPage() {
       fetchDetail(productSlug);
     }
   }, [productSlug, fetchDetail]);
+
+  useEffect(() => {
+    const ids = new Set(wishlistItems.map((item) => item.productId));
+    setWishlistIds(ids);
+  }, [wishlistItems]);
 
   /* ============================= */
   /* INIT DEFAULT VARIANT          */
@@ -374,44 +382,73 @@ export default function ProductDetailPage() {
   /* RELATED PRODUCTS              */
   /* ============================= */
 
-  const relatedProducts = useMemo(() => {
+  // const relatedProducts = useMemo(() => {
+  //   if (!product) return [];
+
+  //   return products
+  //     .filter(
+  //       (p) => p.categoryName === product.categoryName && p.id !== product.id,
+  //     )
+  //     .slice(0, 4);
+  // }, [products, product]);
+
+  const relatedByCategory = useMemo(() => {
+    if (!product) return [];
+
+    return products
+      .filter((p) => p.categoryId === product.categoryId && p.id !== product.id)
+      .slice(0, 5);
+  }, [products, product]);
+
+  const relatedByBrand = useMemo(() => {
     if (!product) return [];
 
     return products
       .filter(
-        (p) => p.categoryName === product.categoryName && p.id !== product.id,
+        (p) =>
+          p.brandId === product.brandId &&
+          p.categoryId !== product.categoryId && // tránh trùng
+          p.id !== product.id,
       )
-      .slice(0, 4);
+      .slice(0, 5);
   }, [products, product]);
 
-  const handleToggleWishlist = async () => {
-    if (!product) return;
-
+  const handleToggleWishlist = async (productId: string) => {
     if (!isAuthenticated) {
       toast.info("Vui lòng đăng nhập để thêm vào wishlist ❤️");
-      // setTimeout(() => navigate("/login"), 800);
       return;
     }
 
     try {
       setWishlistLoading(true);
 
-      const currentlyWishlisted = isWishlisted;
+      const exists = wishlistIds.has(productId);
 
-      // 🔥 Optimistic update
-      setIsWishlisted(!currentlyWishlisted);
+      // optimistic update
+      setWishlistIds((prev) => {
+        const next = new Set(prev);
+        if (exists) next.delete(productId);
+        else next.add(productId);
+        return next;
+      });
 
-      if (currentlyWishlisted) {
-        await dispatch(removeFromWishlist(product.id)).unwrap();
+      if (exists) {
+        await dispatch(removeFromWishlist(productId)).unwrap();
         toast.success("Đã xóa khỏi wishlist");
       } else {
-        await dispatch(addToWishlist(product.id)).unwrap();
+        await dispatch(addToWishlist(productId)).unwrap();
         toast.success("Đã thêm vào wishlist ❤️");
       }
     } catch (err) {
-      // 🔥 Rollback nếu lỗi
-      setIsWishlisted((prev) => !prev);
       toast.error("Không thể cập nhật wishlist");
+
+      // rollback
+      setWishlistIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(productId)) next.delete(productId);
+        else next.add(productId);
+        return next;
+      });
     } finally {
       setWishlistLoading(false);
     }
@@ -711,7 +748,7 @@ export default function ProductDetailPage() {
 
               {/* Wishlist */}
               <button
-                onClick={handleToggleWishlist}
+                onClick={() => handleToggleWishlist(product.id)}
                 disabled={wishlistLoading}
                 className={`h-14 w-14 flex items-center justify-center border transition ${
                   isWishlisted
@@ -739,17 +776,43 @@ export default function ProductDetailPage() {
         </div>
 
         {/* RELATED */}
-        {relatedProducts.length > 0 && (
-          <div>
-            <h2 className="text-xl font-medium mb-10">Sản phẩm liên quan</h2>
+        {relatedByCategory.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-xl font-medium mb-8">Sản phẩm cùng danh mục</h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {relatedProducts.map((item) => (
-                <ProductCard key={item.id} product={item} />
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+              {relatedByCategory.map((item) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isWishlisted={wishlistIds.has(product.id)}
+                  onToggleWishlist={() => handleToggleWishlist(product.id)}
+                />
               ))}
             </div>
           </div>
         )}
+
+        {relatedByBrand.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-xl font-medium mb-8">
+              Sản phẩm cùng thương hiệu
+            </h2>
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+              {relatedByBrand.map((item) => (
+                <ProductCard
+                  key={item.id}
+                  product={item}
+                  isWishlisted={wishlistIds.has(item.id)}
+                  onToggleWishlist={() => handleToggleWishlist(item.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* <FeaturedProducts embedded /> */}
 
         {previewImage && (
           <div

@@ -51,17 +51,17 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/new" className="hover:text-white transition">
-                  Hàng mới về
+                <Link to="/products/nam" className="hover:text-white transition">
+                  Nam
                 </Link>
               </li>
               <li>
-                <Link to="/best-seller" className="hover:text-white transition">
-                  Bán chạy
+                <Link to="/products/nu" className="hover:text-white transition">
+                  Nữ
                 </Link>
               </li>
               <li>
-                <Link to="/sale" className="hover:text-white transition">
+                <Link to="/my-coupons" className="hover:text-white transition">
                   Khuyến mãi
                 </Link>
               </li>
@@ -120,29 +120,6 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-
-        {/* NEWSLETTER */}
-        {/* <div className="mt-24 border-t border-neutral-800 pt-16 text-center">
-          <h3 className="text-lg text-white font-medium">
-            Nhận ưu đãi mới nhất
-          </h3>
-
-          <p className="text-sm text-neutral-500 mt-2">
-            Đăng ký để nhận thông tin khuyến mãi và sản phẩm mới.
-          </p>
-
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Email của bạn"
-              className="w-full px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-full text-sm focus:outline-none focus:border-white transition"
-            />
-
-            <button className="px-6 py-3 bg-white text-black text-sm rounded-full hover:bg-neutral-200 transition">
-              Đăng ký
-            </button>
-          </div>
-        </div> */}
 
         {/* BOTTOM */}
         <div className="mt-20 border-t border-neutral-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-neutral-600">

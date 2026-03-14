@@ -180,21 +180,32 @@ export default function CheckoutPage() {
 
   const processedCoupons = myCoupons
     .map((c) => {
-      const discountAmount = calculateDiscountPreview(c);
-      const isExpired = new Date(c.endDate) < new Date();
+      const now = new Date();
+      const isExpired = new Date(c.endDate) < now;
       const notEnoughCondition = subtotal < Number(c.minOrderValue);
+      const isOutOfUsage = c.usageLimit === 0;
+
+      const discountAmount = calculateDiscountPreview(c);
+
+      const isActive = !isExpired && !notEnoughCondition && !isOutOfUsage;
 
       return {
         ...c,
         discountAmount,
         isExpired,
         notEnoughCondition,
+        isOutOfUsage,
+        isActive,
       };
     })
-    .sort((a, b) => b.discountAmount - a.discountAmount);
+    .sort((a, b) => {
+      if (a.isActive !== b.isActive) {
+        return a.isActive ? -1 : 1;
+      }
 
-  const bestDiscountAmount =
-    processedCoupons.length > 0 ? processedCoupons[0].discountAmount : 0;
+      // Sau đó mới sort theo số tiền giảm
+      return b.discountAmount - a.discountAmount;
+    });
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-20 grid lg:grid-cols-2 gap-20">
@@ -312,17 +323,17 @@ export default function CheckoutPage() {
                 return (
                   <div
                     key={c.id}
-                    onClick={() =>
-                      !isExpired &&
-                      !notEnoughCondition &&
-                      handleSelectCoupon(c.code)
-                    }
+                    onClick={() => {
+                      if (c.isActive) {
+                        handleSelectCoupon(c.code);
+                      }
+                    }}
                     className={`border rounded-xl p-3 cursor-pointer transition text-xs ${
                       couponCode === c.code
                         ? "border-black bg-gray-100"
                         : "border-gray-200"
                     } ${
-                      isExpired || notEnoughCondition
+                      !c.isActive
                         ? "opacity-50 cursor-not-allowed"
                         : "hover:border-black"
                     }`}
@@ -338,6 +349,17 @@ export default function CheckoutPage() {
 
                     <div className="text-gray-500 mt-1">
                       Đơn tối thiểu: {formatPrice(Number(c.minOrderValue))}
+                    </div>
+
+                    <div className="text-gray-500 mt-1">
+                      Số lượt sử dụng còn lại:{" "}
+                      {c.isOutOfUsage ? (
+                        <span className="text-red-500 font-medium">
+                          Hết lượt sử dụng
+                        </span>
+                      ) : (
+                        c.usageLimit
+                      )}
                     </div>
 
                     {/* 🔥 HIỂN THỊ SỐ TIỀN GIẢM THỰC TẾ */}
