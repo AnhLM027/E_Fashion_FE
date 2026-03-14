@@ -179,7 +179,7 @@ export default function ChatWidget() {
         await chatApi.markAsRead(sessionId);
         setMessages((prev) =>
           prev.map((m) =>
-            m.senderType === ChatSenderType.USER ? { ...m, isRead: true } : m,
+            m.senderType === ChatSenderType.AGENT ? { ...m, isRead: true } : m,
           ),
         );
         setUnreadCount(0);
