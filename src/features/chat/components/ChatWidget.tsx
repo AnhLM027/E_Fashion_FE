@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { Image } from "lucide-react";
 import {
   connectChat,
   subscribeSession,
@@ -42,19 +43,19 @@ export default function ChatWidget() {
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const socketReadyRef = useRef(false);
+  const openRef = useRef(open);
+
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+
   /* ================= LOAD HISTORY ================= */
 
   useEffect(() => {
     const init = async () => {
       try {
-        // 1️⃣ Kiểm tra có session sẵn không
         const session = await chatApi.getSession(isLoggedIn);
-
-        if (!session && isLoggedIn) {
-          const newId = await chatApi.createSession(true);
-          setSessionId(newId);
-          return;
-        }
 
         if (session) {
           setSessionId(session.sessionId);
@@ -67,18 +68,6 @@ export default function ChatWidget() {
 
     init();
   }, [isLoggedIn]);
-
-  useEffect(() => {
-    if (isLoggedIn) return; // 🔥 guest only
-    if (!open || sessionId) return;
-
-    const initSession = async () => {
-      const id = await chatApi.createSession(false);
-      setSessionId(id);
-    };
-
-    initSession();
-  }, [open, isLoggedIn]);
 
   const createLocalMessage = (
     sessionId: string,
@@ -133,7 +122,9 @@ export default function ChatWidget() {
     let subscription: any = null;
 
     client.onConnect = () => {
-      subscription = subscribeSession(sessionId, async (msg: any) => {
+      socketReadyRef.current = true;
+
+      subscription = subscribeSession(sessionId, async (msg) => {
         if (msg.type === "READ") {
           setMessages((prev) =>
             prev.map((m) =>
@@ -142,25 +133,15 @@ export default function ChatWidget() {
           );
           return;
         }
-        // console.log("ADMIN RECEIVED:", msg);
-        setMessages((prev) => [...prev, msg]);
-        // console.log("SOCKET MSG:", msg);
 
-        // Nếu chat đang mở → mark ngay backend
-        if (open) {
-          // console.log("READ");
-          await chatApi.markAsRead(sessionId);
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.senderType === ChatSenderType.AGENT
-                ? { ...m, isRead: true }
-                : m,
-            ),
-          );
-          setUnreadCount(0);
-        } else {
-          // Chỉ tăng nếu tin từ AGENT
-          if (msg.senderType === ChatSenderType.AGENT) {
+        setMessages((prev) => [...prev, msg]);
+
+        // Dùng openRef.current để check trạng thái đóng/mở
+        if (msg.senderType === ChatSenderType.AGENT) {
+          if (openRef.current) {
+            await chatApi.markAsRead(sessionId);
+            setUnreadCount(0);
+          } else {
             setUnreadCount((prev) => prev + 1);
           }
         }
@@ -168,10 +149,11 @@ export default function ChatWidget() {
     };
 
     return () => {
+      socketReadyRef.current = false; // Reset khi cleanup
       subscription?.unsubscribe();
       disconnectChat();
     };
-  }, [sessionId, open]);
+  }, [sessionId]);
 
   /* ================= SCROLL ================= */
 
@@ -237,17 +219,62 @@ export default function ChatWidget() {
 
   /* ================= SEND TEXT ================= */
 
-  const handleSend = () => {
-    if (!input.trim() || !sessionId) return;
+  const ensureSession = async () => {
+    if (sessionId) return sessionId;
+    try {
+      const id = await chatApi.createSession(isLoggedIn); // Truyền trạng thái login
+      setSessionId(id);
+      return id;
+    } catch (error) {
+      console.error("Failed to create session on demand", error);
+      return null;
+    }
+  };
 
-    sendMessage({
-      sessionId,
-      senderType: ChatSenderType.USER,
-      messageType: ChatMessageType.TEXT,
-      content: input,
+  const waitForSocket = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (socketReadyRef.current) return resolve(true);
+
+      const interval = setInterval(() => {
+        if (socketReadyRef.current) {
+          clearInterval(interval);
+          resolve(true);
+        }
+      }, 100);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        resolve(false);
+      }, 5000); // Timeout sau 5s
     });
+  };
 
+  // Hàm wrapper để đảm bảo Session và Socket sẵn sàng trước khi thực hiện action
+  const performChatAction = async (action: (sid: string) => void) => {
+    const currentSessionId = await ensureSession();
+    if (!currentSessionId) return;
+
+    const isReady = await waitForSocket();
+    if (isReady) {
+      action(currentSessionId);
+    } else {
+      console.error("Socket connection timeout");
+    }
+  };
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    const content = input; // Giữ lại giá trị để xóa input sớm cho UX mượt
     setInput("");
+
+    await performChatAction((sid) => {
+      sendMessage({
+        sessionId: sid,
+        senderType: ChatSenderType.USER,
+        messageType: ChatMessageType.TEXT,
+        content: content,
+      });
+    });
   };
 
   /* ================= UPLOAD IMAGE ================= */
@@ -269,37 +296,27 @@ export default function ChatWidget() {
   };
 
   const handleSendImage = async () => {
-    if (!selectedFile || !sessionId) return;
+    if (!selectedFile) return;
 
     try {
       setUploading(true);
+      // Lưu ý: Upload ảnh lên S3/Server trước để lấy URL, sau đó mới gửi qua Socket
+      const imageUrl = await chatApi.uploadImage(selectedFile);
 
-      const formData = new FormData();
-      formData.append("file", selectedFile);
+      await performChatAction((sid) => {
+        sendMessage({
+          sessionId: sid,
+          senderType: ChatSenderType.USER,
+          messageType: ChatMessageType.IMAGE,
+          content: imageUrl,
+        });
 
-      let imageUrl = await chatApi.uploadImage(selectedFile);
-
-      if (imageUrl.startsWith("/")) {
-        imageUrl = `${import.meta.env.VITE_API_URL || ""}${imageUrl}`;
-      }
-
-      sendMessage({
-        sessionId,
-        senderType: ChatSenderType.USER,
-        messageType: ChatMessageType.IMAGE,
-        content: imageUrl,
+        setPreviewImage(null);
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
       });
-
-      // Reset
-      setPreviewImage(null);
-      setSelectedFile(null);
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
     } catch (err) {
       console.error("Upload failed", err);
-      alert("Upload thất bại");
     } finally {
       setUploading(false);
     }
@@ -327,7 +344,7 @@ export default function ChatWidget() {
             target="_blank"
             className="flex items-center gap-2 underline"
           >
-            📎 {m.metadata?.fileName || "Tải file"}
+            <Image size={18} />
           </a>
         );
 
@@ -531,14 +548,16 @@ export default function ChatWidget() {
               {QUICK_MESSAGES.map((msg, index) => (
                 <button
                   key={index}
-                  onClick={() => {
-                    sendMessage({
-                      sessionId,
-                      senderType: ChatSenderType.USER,
-                      messageType: ChatMessageType.TEXT,
-                      content: msg,
-                    });
-                  }}
+                  onClick={() =>
+                    performChatAction((sid) => {
+                      sendMessage({
+                        sessionId: sid,
+                        senderType: ChatSenderType.USER,
+                        messageType: ChatMessageType.TEXT,
+                        content: msg,
+                      });
+                    })
+                  }
                   className="text-xs bg-white border px-3 py-1 rounded-full hover:bg-black hover:text-white transition"
                 >
                   {msg}
@@ -578,7 +597,9 @@ export default function ChatWidget() {
           {/* Input */}
           <div className="p-3 border-t bg-white">
             <div className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-2">
-              <button onClick={() => fileInputRef.current?.click()}>📎</button>
+              <button onClick={() => fileInputRef.current?.click()}>
+                <Image size={18} />
+              </button>
               <input
                 type="file"
                 accept="image/*"
@@ -587,7 +608,7 @@ export default function ChatWidget() {
                 onChange={handleFileUpload}
               />
               <input
-                disabled={!sessionId}
+                // disabled={!sessionId}
                 className="flex-1 bg-transparent text-sm focus:outline-none"
                 placeholder="Nhập tin nhắn..."
                 value={input}
@@ -595,7 +616,7 @@ export default function ChatWidget() {
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
               />
               <button
-                disabled={!sessionId}
+                // disabled={!sessionId}
                 onClick={handleSend}
                 className="bg-black text-white px-4 py-1.5 rounded-full text-sm"
               >
