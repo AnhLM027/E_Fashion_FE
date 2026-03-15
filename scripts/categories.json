@@ -1,0 +1,952 @@
+[
+    {
+        "children": [
+            {
+                "children": [
+                    {
+                        "children": [],
+                        "id": "f6fe29e1-fb0b-4645-99cf-cabc8b4d6b66",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Boot",
+                        "parentId": "3a539157-16c4-4d77-8a56-e8ee0308fde8",
+                        "slug": "nam/giay-dep/boot"
+                    },
+                    {
+                        "children": [],
+                        "id": "d6e35995-6cb0-4269-bb9a-acfe410c414d",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Dép",
+                        "parentId": "3a539157-16c4-4d77-8a56-e8ee0308fde8",
+                        "slug": "nam/giay-dep/dep"
+                    },
+                    {
+                        "children": [],
+                        "id": "c55a1621-3c0b-451a-9f9a-81db09a1f49e",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Giày lười",
+                        "parentId": "3a539157-16c4-4d77-8a56-e8ee0308fde8",
+                        "slug": "nam/giay-dep/giay-luoi"
+                    },
+                    {
+                        "children": [],
+                        "id": "43ec9a6c-8016-4a4b-b3ce-c5ca6fca409f",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Giày tây",
+                        "parentId": "3a539157-16c4-4d77-8a56-e8ee0308fde8",
+                        "slug": "nam/giay-dep/giay-tay"
+                    },
+                    {
+                        "children": [],
+                        "id": "8654fdfd-48f7-4e17-a456-a6a4fb1e7080",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Sandal",
+                        "parentId": "3a539157-16c4-4d77-8a56-e8ee0308fde8",
+                        "slug": "nam/giay-dep/sandal"
+                    },
+                    {
+                        "children": [],
+                        "id": "afbc28db-db04-4e45-aea6-135e86530547",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Sneaker",
+                        "parentId": "3a539157-16c4-4d77-8a56-e8ee0308fde8",
+                        "slug": "nam/giay-dep/sneaker"
+                    }
+                ],
+                "id": "3a539157-16c4-4d77-8a56-e8ee0308fde8",
+                "imageUrl": null,
+                "isActive": true,
+                "name": "Giày dép",
+                "parentId": "be775a8c-9e54-4fdc-9d24-e47a65ef787f",
+                "slug": "nam/giay-dep"
+            },
+            {
+                "children": [
+                    {
+                        "children": [],
+                        "id": "f82f479a-781e-4c3f-ae65-111a8259d3cd",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Balo",
+                        "parentId": "f9a78f43-7ca1-4fbc-8486-525aac779c25",
+                        "slug": "nam/phu-kien/balo"
+                    },
+                    {
+                        "children": [],
+                        "id": "4e51f9eb-6d80-43ad-a58d-b91702a4f5e6",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Cà vạt",
+                        "parentId": "f9a78f43-7ca1-4fbc-8486-525aac779c25",
+                        "slug": "nam/phu-kien/ca-vat"
+                    },
+                    {
+                        "children": [],
+                        "id": "ce07bd43-7385-4f4e-b792-8711d17b17ec",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Kính mát",
+                        "parentId": "f9a78f43-7ca1-4fbc-8486-525aac779c25",
+                        "slug": "nam/phu-kien/kinh-mat"
+                    },
+                    {
+                        "children": [],
+                        "id": "fd117cd1-fbc9-4f3a-ba37-dd2357dd0ace",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Nón",
+                        "parentId": "f9a78f43-7ca1-4fbc-8486-525aac779c25",
+                        "slug": "nam/phu-kien/non"
+                    },
+                    {
+                        "children": [],
+                        "id": "84b6ab37-69bd-4905-9deb-82ca3ba36a22",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Đồng hồ",
+                        "parentId": "f9a78f43-7ca1-4fbc-8486-525aac779c25",
+                        "slug": "nam/phu-kien/ong-ho"
+                    },
+                    {
+                        "children": [],
+                        "id": "5857b5d3-dd58-42f1-acd8-00ed8eb0e903",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Thắt lưng",
+                        "parentId": "f9a78f43-7ca1-4fbc-8486-525aac779c25",
+                        "slug": "nam/phu-kien/that-lung"
+                    },
+                    {
+                        "children": [],
+                        "id": "fb02e584-cdae-4c5d-8b82-c70b62fa2b57",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Túi đeo chéo",
+                        "parentId": "f9a78f43-7ca1-4fbc-8486-525aac779c25",
+                        "slug": "nam/phu-kien/tui-eo-cheo"
+                    },
+                    {
+                        "children": [],
+                        "id": "93eaac8f-c9b5-4c3b-bfe9-707a7a2e9ccd",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Ví",
+                        "parentId": "f9a78f43-7ca1-4fbc-8486-525aac779c25",
+                        "slug": "nam/phu-kien/vi"
+                    }
+                ],
+                "id": "f9a78f43-7ca1-4fbc-8486-525aac779c25",
+                "imageUrl": null,
+                "isActive": true,
+                "name": "Phụ kiện",
+                "parentId": "be775a8c-9e54-4fdc-9d24-e47a65ef787f",
+                "slug": "nam/phu-kien"
+            },
+            {
+                "children": [
+                    {
+                        "children": [
+                            {
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "id": "bddc8e1b-74df-4905-964f-b275246bf6d5",
+                                        "imageUrl": null,
+                                        "isActive": true,
+                                        "name": "Áo blazer",
+                                        "parentId": "91790b4d-4f61-4216-a89c-45844a121e32",
+                                        "slug": "nam/quan-ao/ao/ao-khoac/ao-blazer"
+                                    },
+                                    {
+                                        "children": [],
+                                        "id": "cf13520d-6600-40e5-ae00-ed97f529bfbc",
+                                        "imageUrl": null,
+                                        "isActive": true,
+                                        "name": "Áo hoodie",
+                                        "parentId": "91790b4d-4f61-4216-a89c-45844a121e32",
+                                        "slug": "nam/quan-ao/ao/ao-khoac/ao-hoodie"
+                                    },
+                                    {
+                                        "children": [],
+                                        "id": "5a1573d1-e65f-48c9-93f6-c9afea88da8a",
+                                        "imageUrl": null,
+                                        "isActive": true,
+                                        "name": "Áo khoác bomber",
+                                        "parentId": "91790b4d-4f61-4216-a89c-45844a121e32",
+                                        "slug": "nam/quan-ao/ao/ao-khoac/ao-khoac-bomber"
+                                    },
+                                    {
+                                        "children": [],
+                                        "id": "3555fe05-5403-4601-8f71-355ff70148d4",
+                                        "imageUrl": null,
+                                        "isActive": true,
+                                        "name": "Áo khoác jean",
+                                        "parentId": "91790b4d-4f61-4216-a89c-45844a121e32",
+                                        "slug": "nam/quan-ao/ao/ao-khoac/ao-khoac-jean"
+                                    }
+                                ],
+                                "id": "91790b4d-4f61-4216-a89c-45844a121e32",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo khoác",
+                                "parentId": "ef0c62ac-36dc-4706-8cd0-65eb2e171ee1",
+                                "slug": "nam/quan-ao/ao/ao-khoac"
+                            },
+                            {
+                                "children": [],
+                                "id": "7b00f324-4080-4ec0-9e3b-ae466ac81290",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo len",
+                                "parentId": "ef0c62ac-36dc-4706-8cd0-65eb2e171ee1",
+                                "slug": "nam/quan-ao/ao/ao-len"
+                            },
+                            {
+                                "children": [],
+                                "id": "5eb95809-d045-480e-b582-a97c9281331b",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo polo",
+                                "parentId": "ef0c62ac-36dc-4706-8cd0-65eb2e171ee1",
+                                "slug": "nam/quan-ao/ao/ao-polo"
+                            },
+                            {
+                                "children": [],
+                                "id": "773f3c28-3b59-4566-a54f-a22815c1ecdc",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo sơ mi",
+                                "parentId": "ef0c62ac-36dc-4706-8cd0-65eb2e171ee1",
+                                "slug": "nam/quan-ao/ao/ao-so-mi"
+                            },
+                            {
+                                "children": [],
+                                "id": "238e2ae6-b3fb-4aa3-856d-51ea69d3c675",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo tanktop",
+                                "parentId": "ef0c62ac-36dc-4706-8cd0-65eb2e171ee1",
+                                "slug": "nam/quan-ao/ao/ao-tanktop"
+                            },
+                            {
+                                "children": [],
+                                "id": "19fd144d-f051-4fdb-b230-0956fb1df0fc",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo thun",
+                                "parentId": "ef0c62ac-36dc-4706-8cd0-65eb2e171ee1",
+                                "slug": "nam/quan-ao/ao/ao-thun"
+                            }
+                        ],
+                        "id": "ef0c62ac-36dc-4706-8cd0-65eb2e171ee1",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Áo",
+                        "parentId": "6c7d8447-e61f-4f3e-a915-fcb6f31107b7",
+                        "slug": "nam/quan-ao/ao"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "id": "a2b8a982-0ac2-4707-ac53-230ba73f102b",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Đồ mặc nhà",
+                                "parentId": "41a6e28a-7b25-4b94-ae70-597b5cf45741",
+                                "slug": "nam/quan-ao/o-bo-o-ngu/o-mac-nha"
+                            },
+                            {
+                                "children": [],
+                                "id": "ac2b40ff-b28a-47f6-a73a-037b92efd90a",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Đồ ngủ",
+                                "parentId": "41a6e28a-7b25-4b94-ae70-597b5cf45741",
+                                "slug": "nam/quan-ao/o-bo-o-ngu/o-ngu"
+                            }
+                        ],
+                        "id": "41a6e28a-7b25-4b94-ae70-597b5cf45741",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Đồ bộ & Đồ ngủ",
+                        "parentId": "6c7d8447-e61f-4f3e-a915-fcb6f31107b7",
+                        "slug": "nam/quan-ao/o-bo-o-ngu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "id": "a65afcef-1776-48c2-b696-33c8d7a18d2d",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo thể thao",
+                                "parentId": "90c37812-b2fc-4193-957e-51cc200f2d09",
+                                "slug": "nam/quan-ao/o-the-thao/ao-the-thao"
+                            },
+                            {
+                                "children": [],
+                                "id": "a11a77b4-c867-46c0-a522-2a57054c3d45",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Bộ thể thao",
+                                "parentId": "90c37812-b2fc-4193-957e-51cc200f2d09",
+                                "slug": "nam/quan-ao/o-the-thao/bo-the-thao"
+                            },
+                            {
+                                "children": [],
+                                "id": "b5a67b6e-6053-468a-98ac-a3ace3bfaddc",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Quần thể thao",
+                                "parentId": "90c37812-b2fc-4193-957e-51cc200f2d09",
+                                "slug": "nam/quan-ao/o-the-thao/quan-the-thao"
+                            }
+                        ],
+                        "id": "90c37812-b2fc-4193-957e-51cc200f2d09",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Đồ thể thao",
+                        "parentId": "6c7d8447-e61f-4f3e-a915-fcb6f31107b7",
+                        "slug": "nam/quan-ao/o-the-thao"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "id": "7ec32a5b-712a-4eb1-abca-fd00a7b8e289",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Quần jean",
+                                "parentId": "99bdc9c8-6776-4101-91cf-9490780cf298",
+                                "slug": "nam/quan-ao/quan/quan-jean"
+                            },
+                            {
+                                "children": [],
+                                "id": "3c540921-abc7-400f-bdd1-4fd7297adc5c",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Quần jogger",
+                                "parentId": "99bdc9c8-6776-4101-91cf-9490780cf298",
+                                "slug": "nam/quan-ao/quan/quan-jogger"
+                            },
+                            {
+                                "children": [],
+                                "id": "cb26f565-00c7-40c1-9422-ce3831132591",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Quần kaki",
+                                "parentId": "99bdc9c8-6776-4101-91cf-9490780cf298",
+                                "slug": "nam/quan-ao/quan/quan-kaki"
+                            },
+                            {
+                                "children": [],
+                                "id": "a18f45e5-aa5f-4909-91c1-7517984517ff",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Quần short",
+                                "parentId": "99bdc9c8-6776-4101-91cf-9490780cf298",
+                                "slug": "nam/quan-ao/quan/quan-short"
+                            },
+                            {
+                                "children": [],
+                                "id": "c36fca70-568f-48ca-8908-987b0a9643db",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Quần tây",
+                                "parentId": "99bdc9c8-6776-4101-91cf-9490780cf298",
+                                "slug": "nam/quan-ao/quan/quan-tay"
+                            }
+                        ],
+                        "id": "99bdc9c8-6776-4101-91cf-9490780cf298",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Quần",
+                        "parentId": "6c7d8447-e61f-4f3e-a915-fcb6f31107b7",
+                        "slug": "nam/quan-ao/quan"
+                    }
+                ],
+                "id": "6c7d8447-e61f-4f3e-a915-fcb6f31107b7",
+                "imageUrl": null,
+                "isActive": true,
+                "name": "Quần áo",
+                "parentId": "be775a8c-9e54-4fdc-9d24-e47a65ef787f",
+                "slug": "nam/quan-ao"
+            }
+        ],
+        "id": "be775a8c-9e54-4fdc-9d24-e47a65ef787f",
+        "imageUrl": "https://tiemchupanh.com/wp-content/uploads/2023/12/TCA_7104.jpg",
+        "isActive": true,
+        "name": "Nam",
+        "parentId": null,
+        "slug": "nam"
+    },
+    {
+        "children": [
+            {
+                "children": [
+                    {
+                        "children": [],
+                        "id": "b5cc3f30-0f02-4a44-b860-a33417f1814c",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Boot",
+                        "parentId": "1b8409bf-af7f-46ad-861e-0196515d3d36",
+                        "slug": "nu/giay-dep/boot"
+                    },
+                    {
+                        "children": [],
+                        "id": "ad433d56-a941-4c03-9032-8a5e89cc0661",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Dép",
+                        "parentId": "1b8409bf-af7f-46ad-861e-0196515d3d36",
+                        "slug": "nu/giay-dep/dep"
+                    },
+                    {
+                        "children": [],
+                        "id": "db866daf-404f-41a3-9da5-c8351b3f1fc9",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Giày búp bê",
+                        "parentId": "1b8409bf-af7f-46ad-861e-0196515d3d36",
+                        "slug": "nu/giay-dep/giay-bup-be"
+                    },
+                    {
+                        "children": [],
+                        "id": "cb244255-5d74-4e58-a6d1-5927fb4011f6",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Giày cao gót",
+                        "parentId": "1b8409bf-af7f-46ad-861e-0196515d3d36",
+                        "slug": "nu/giay-dep/giay-cao-got"
+                    },
+                    {
+                        "children": [],
+                        "id": "9aac8a5b-f3fb-4e24-afb4-208b80a42d01",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Sandal",
+                        "parentId": "1b8409bf-af7f-46ad-861e-0196515d3d36",
+                        "slug": "nu/giay-dep/sandal"
+                    },
+                    {
+                        "children": [],
+                        "id": "5a6279d3-9881-44c8-9555-027104ebac22",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Sneaker",
+                        "parentId": "1b8409bf-af7f-46ad-861e-0196515d3d36",
+                        "slug": "nu/giay-dep/sneaker"
+                    }
+                ],
+                "id": "1b8409bf-af7f-46ad-861e-0196515d3d36",
+                "imageUrl": null,
+                "isActive": true,
+                "name": "Giày dép",
+                "parentId": "84059cc5-a8a9-4a90-afe9-be4792b8fe76",
+                "slug": "nu/giay-dep"
+            },
+            {
+                "children": [
+                    {
+                        "children": [],
+                        "id": "2f49bbcc-f484-44d0-91f3-d4ee65cd794f",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Khăn choàng",
+                        "parentId": "1b723af2-62a8-4fe3-b54e-347b27c5a20c",
+                        "slug": "nu/phu-kien/khan-choang"
+                    },
+                    {
+                        "children": [],
+                        "id": "9a026d5e-70c3-452f-a48e-84eb3fe95d15",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Kính mát",
+                        "parentId": "1b723af2-62a8-4fe3-b54e-347b27c5a20c",
+                        "slug": "nu/phu-kien/kinh-mat"
+                    },
+                    {
+                        "children": [],
+                        "id": "773c8a47-abf8-4419-8065-564cea63d55c",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Nón",
+                        "parentId": "1b723af2-62a8-4fe3-b54e-347b27c5a20c",
+                        "slug": "nu/phu-kien/non"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "id": "8959743f-6ae0-465f-a805-58a64b0283c9",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Bông tai",
+                                "parentId": "6d032752-d63c-4a6e-8060-dce0eb7ab8be",
+                                "slug": "nu/phu-kien/trang-suc/bong-tai"
+                            },
+                            {
+                                "children": [],
+                                "id": "5815245c-cd8b-443c-8910-50928a2e1138",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Lắc tay",
+                                "parentId": "6d032752-d63c-4a6e-8060-dce0eb7ab8be",
+                                "slug": "nu/phu-kien/trang-suc/lac-tay"
+                            },
+                            {
+                                "children": [],
+                                "id": "93fecf2d-7352-4b31-9e22-67b9653ee62b",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Nhẫn",
+                                "parentId": "6d032752-d63c-4a6e-8060-dce0eb7ab8be",
+                                "slug": "nu/phu-kien/trang-suc/nhan"
+                            },
+                            {
+                                "children": [],
+                                "id": "abebc472-7159-497e-8eac-b0319fcaa819",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Vòng cổ",
+                                "parentId": "6d032752-d63c-4a6e-8060-dce0eb7ab8be",
+                                "slug": "nu/phu-kien/trang-suc/vong-co"
+                            }
+                        ],
+                        "id": "6d032752-d63c-4a6e-8060-dce0eb7ab8be",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Trang sức",
+                        "parentId": "1b723af2-62a8-4fe3-b54e-347b27c5a20c",
+                        "slug": "nu/phu-kien/trang-suc"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "id": "bb0d93d3-dba4-45fc-ae3d-2380c5327211",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Balo",
+                                "parentId": "e22cccee-507e-419e-9e49-53bad3250af6",
+                                "slug": "nu/phu-kien/tui-xach/balo"
+                            },
+                            {
+                                "children": [],
+                                "id": "cf77e7bd-a11e-45c1-b510-350fd8bd2f58",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Clutch",
+                                "parentId": "e22cccee-507e-419e-9e49-53bad3250af6",
+                                "slug": "nu/phu-kien/tui-xach/clutch"
+                            },
+                            {
+                                "children": [],
+                                "id": "c38e169e-f736-4042-8cf5-c7f238e86aa5",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Túi đeo vai",
+                                "parentId": "e22cccee-507e-419e-9e49-53bad3250af6",
+                                "slug": "nu/phu-kien/tui-xach/tui-eo-vai"
+                            },
+                            {
+                                "children": [],
+                                "id": "a68923eb-4fde-4e5c-8bcd-529135b224cd",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Túi tote",
+                                "parentId": "e22cccee-507e-419e-9e49-53bad3250af6",
+                                "slug": "nu/phu-kien/tui-xach/tui-tote"
+                            }
+                        ],
+                        "id": "e22cccee-507e-419e-9e49-53bad3250af6",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Túi xách",
+                        "parentId": "1b723af2-62a8-4fe3-b54e-347b27c5a20c",
+                        "slug": "nu/phu-kien/tui-xach"
+                    },
+                    {
+                        "children": [],
+                        "id": "25789896-9bf7-46ae-89b1-bb124ae1d699",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Ví",
+                        "parentId": "1b723af2-62a8-4fe3-b54e-347b27c5a20c",
+                        "slug": "nu/phu-kien/vi"
+                    }
+                ],
+                "id": "1b723af2-62a8-4fe3-b54e-347b27c5a20c",
+                "imageUrl": null,
+                "isActive": true,
+                "name": "Phụ kiện",
+                "parentId": "84059cc5-a8a9-4a90-afe9-be4792b8fe76",
+                "slug": "nu/phu-kien"
+            },
+            {
+                "children": [
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "id": "0ef390da-df54-44bb-aac0-bd24f3bf6e37",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo croptop",
+                                "parentId": "264b7bd0-89f4-4747-8c5f-e32b3a079989",
+                                "slug": "nu/quan-ao/ao/ao-croptop"
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "id": "602794e6-f738-4210-b3cb-a31c3aafe69d",
+                                        "imageUrl": null,
+                                        "isActive": true,
+                                        "name": "Áo blazer",
+                                        "parentId": "e9bc03bb-26f5-4bb4-bd6d-b3307f0b338e",
+                                        "slug": "nu/quan-ao/ao/ao-khoac/ao-blazer"
+                                    },
+                                    {
+                                        "children": [],
+                                        "id": "37c9286a-bdf4-4360-b5a8-2248bc69fae3",
+                                        "imageUrl": null,
+                                        "isActive": true,
+                                        "name": "Áo cardigan",
+                                        "parentId": "e9bc03bb-26f5-4bb4-bd6d-b3307f0b338e",
+                                        "slug": "nu/quan-ao/ao/ao-khoac/ao-cardigan"
+                                    },
+                                    {
+                                        "children": [],
+                                        "id": "d3751885-de6d-454c-aa16-6cb6fa97035f",
+                                        "imageUrl": null,
+                                        "isActive": true,
+                                        "name": "Áo dạ",
+                                        "parentId": "e9bc03bb-26f5-4bb4-bd6d-b3307f0b338e",
+                                        "slug": "nu/quan-ao/ao/ao-khoac/ao-da"
+                                    },
+                                    {
+                                        "children": [],
+                                        "id": "de764cf1-262c-46a4-bde9-76e4a33ccaf9",
+                                        "imageUrl": null,
+                                        "isActive": true,
+                                        "name": "Áo hoodie",
+                                        "parentId": "e9bc03bb-26f5-4bb4-bd6d-b3307f0b338e",
+                                        "slug": "nu/quan-ao/ao/ao-khoac/ao-hoodie"
+                                    }
+                                ],
+                                "id": "e9bc03bb-26f5-4bb4-bd6d-b3307f0b338e",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo khoác",
+                                "parentId": "264b7bd0-89f4-4747-8c5f-e32b3a079989",
+                                "slug": "nu/quan-ao/ao/ao-khoac"
+                            },
+                            {
+                                "children": [],
+                                "id": "79be79bd-f915-4422-977e-a2401624574c",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo kiểu",
+                                "parentId": "264b7bd0-89f4-4747-8c5f-e32b3a079989",
+                                "slug": "nu/quan-ao/ao/ao-kieu"
+                            },
+                            {
+                                "children": [],
+                                "id": "2c7a3320-5d19-47f1-95d4-8fa87653bd1b",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo len",
+                                "parentId": "264b7bd0-89f4-4747-8c5f-e32b3a079989",
+                                "slug": "nu/quan-ao/ao/ao-len"
+                            },
+                            {
+                                "children": [],
+                                "id": "a969dc09-ac09-4633-ba8e-6c440ba11bb2",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo sơ mi",
+                                "parentId": "264b7bd0-89f4-4747-8c5f-e32b3a079989",
+                                "slug": "nu/quan-ao/ao/ao-so-mi"
+                            },
+                            {
+                                "children": [],
+                                "id": "f2f2e5ed-0d34-4efd-8ed4-0c48d671c777",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo thun",
+                                "parentId": "264b7bd0-89f4-4747-8c5f-e32b3a079989",
+                                "slug": "nu/quan-ao/ao/ao-thun"
+                            }
+                        ],
+                        "id": "264b7bd0-89f4-4747-8c5f-e32b3a079989",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Áo",
+                        "parentId": "7ccd898b-0bcb-49f0-a801-5bed0f79cbc2",
+                        "slug": "nu/quan-ao/ao"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "id": "8a694f9b-ad60-414c-84ee-1898da9214f8",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Đồ mặc nhà",
+                                "parentId": "8956d5aa-d309-4ea8-bb09-35786335c1e8",
+                                "slug": "nu/quan-ao/o-bo-o-ngu/o-mac-nha"
+                            },
+                            {
+                                "children": [],
+                                "id": "357fe981-5455-4b69-9a5c-477d057c0f6d",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Đồ ngủ",
+                                "parentId": "8956d5aa-d309-4ea8-bb09-35786335c1e8",
+                                "slug": "nu/quan-ao/o-bo-o-ngu/o-ngu"
+                            }
+                        ],
+                        "id": "8956d5aa-d309-4ea8-bb09-35786335c1e8",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Đồ bộ & Đồ ngủ",
+                        "parentId": "7ccd898b-0bcb-49f0-a801-5bed0f79cbc2",
+                        "slug": "nu/quan-ao/o-bo-o-ngu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "id": "f4a5a001-5b23-426e-87cc-158f57b1306e",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Áo thể thao",
+                                "parentId": "7c938790-7dcc-4bd0-b34d-c7dc5de27ecc",
+                                "slug": "nu/quan-ao/o-the-thao/ao-the-thao"
+                            },
+                            {
+                                "children": [],
+                                "id": "d65003b0-0a7e-40d7-88c3-50482e8ffb27",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Bộ thể thao",
+                                "parentId": "7c938790-7dcc-4bd0-b34d-c7dc5de27ecc",
+                                "slug": "nu/quan-ao/o-the-thao/bo-the-thao"
+                            },
+                            {
+                                "children": [],
+                                "id": "84c2ae81-6bc0-45de-a366-c44750a1b3e7",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Quần thể thao",
+                                "parentId": "7c938790-7dcc-4bd0-b34d-c7dc5de27ecc",
+                                "slug": "nu/quan-ao/o-the-thao/quan-the-thao"
+                            }
+                        ],
+                        "id": "7c938790-7dcc-4bd0-b34d-c7dc5de27ecc",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Đồ thể thao",
+                        "parentId": "7ccd898b-0bcb-49f0-a801-5bed0f79cbc2",
+                        "slug": "nu/quan-ao/o-the-thao"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "id": "f95156b9-4c89-4216-ab50-4640db6f729d",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Quần culottes",
+                                "parentId": "d05602cb-7fed-4c0a-a1a5-b2606dd4c8ad",
+                                "slug": "nu/quan-ao/quan/quan-culottes"
+                            },
+                            {
+                                "children": [],
+                                "id": "efa79228-b672-466d-a9ac-d49f4a17efaf",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Quần jean",
+                                "parentId": "d05602cb-7fed-4c0a-a1a5-b2606dd4c8ad",
+                                "slug": "nu/quan-ao/quan/quan-jean"
+                            },
+                            {
+                                "children": [],
+                                "id": "00e1f859-26f2-4a3d-8334-fe04884bb415",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Quần legging",
+                                "parentId": "d05602cb-7fed-4c0a-a1a5-b2606dd4c8ad",
+                                "slug": "nu/quan-ao/quan/quan-legging"
+                            },
+                            {
+                                "children": [],
+                                "id": "a94ca2a0-6850-40ab-b1a9-ad80445695e2",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Quần short",
+                                "parentId": "d05602cb-7fed-4c0a-a1a5-b2606dd4c8ad",
+                                "slug": "nu/quan-ao/quan/quan-short"
+                            }
+                        ],
+                        "id": "d05602cb-7fed-4c0a-a1a5-b2606dd4c8ad",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Quần",
+                        "parentId": "7ccd898b-0bcb-49f0-a801-5bed0f79cbc2",
+                        "slug": "nu/quan-ao/quan"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "id": "c326c813-26ad-4c7c-82ac-c42d0bbb1ebb",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Chân váy",
+                                "parentId": "05058d8e-7885-4f5e-84b5-95aa8236b36f",
+                                "slug": "nu/quan-ao/vay/chan-vay"
+                            },
+                            {
+                                "children": [],
+                                "id": "66e29692-de1a-43a2-ab0f-6626ec46517f",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Váy body",
+                                "parentId": "05058d8e-7885-4f5e-84b5-95aa8236b36f",
+                                "slug": "nu/quan-ao/vay/vay-body"
+                            },
+                            {
+                                "children": [],
+                                "id": "d7d29884-277c-465c-ad7b-fd2c5c3457e0",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Váy dài",
+                                "parentId": "05058d8e-7885-4f5e-84b5-95aa8236b36f",
+                                "slug": "nu/quan-ao/vay/vay-dai"
+                            },
+                            {
+                                "children": [],
+                                "id": "d19d6385-6d2e-4afb-9b13-0f2e949bb803",
+                                "imageUrl": null,
+                                "isActive": true,
+                                "name": "Váy ngắn",
+                                "parentId": "05058d8e-7885-4f5e-84b5-95aa8236b36f",
+                                "slug": "nu/quan-ao/vay/vay-ngan"
+                            }
+                        ],
+                        "id": "05058d8e-7885-4f5e-84b5-95aa8236b36f",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Váy",
+                        "parentId": "7ccd898b-0bcb-49f0-a801-5bed0f79cbc2",
+                        "slug": "nu/quan-ao/vay"
+                    }
+                ],
+                "id": "7ccd898b-0bcb-49f0-a801-5bed0f79cbc2",
+                "imageUrl": null,
+                "isActive": true,
+                "name": "Quần áo",
+                "parentId": "84059cc5-a8a9-4a90-afe9-be4792b8fe76",
+                "slug": "nu/quan-ao"
+            }
+        ],
+        "id": "84059cc5-a8a9-4a90-afe9-be4792b8fe76",
+        "imageUrl": "https://cafefcdn.com/203337114487263232/2022/1/5/photo-1-1641349267968282067556.jpg",
+        "isActive": true,
+        "name": "Nữ",
+        "parentId": null,
+        "slug": "nu"
+    },
+    {
+        "children": [],
+        "id": "9d9586ee-6fff-4b6a-bf7d-e3db9d440891",
+        "imageUrl": "https://down-vn.img.susercontent.com/file/sg-11134201-7rd63-m6wkugq8kt2h20.webp",
+        "isActive": true,
+        "name": "Trẻ em",
+        "parentId": null,
+        "slug": "tre-em"
+    },
+    {
+        "children": [
+            {
+                "children": [],
+                "id": "2348721c-a407-477c-bc06-6d4728006c36",
+                "imageUrl": null,
+                "isActive": true,
+                "name": "Áo thun",
+                "parentId": "4d58c048-008d-4bb9-872f-75ff156272d8",
+                "slug": "unisex/ao-thun"
+            },
+            {
+                "children": [],
+                "id": "5a64e588-c8a9-4f36-9d86-f62e2c06ebf7",
+                "imageUrl": null,
+                "isActive": true,
+                "name": "Hoodie",
+                "parentId": "4d58c048-008d-4bb9-872f-75ff156272d8",
+                "slug": "unisex/hoodie"
+            },
+            {
+                "children": [
+                    {
+                        "children": [],
+                        "id": "789ba38b-9f22-415b-8301-7b1ce2d6a73c",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Balo",
+                        "parentId": "88f66ee0-7479-4268-a085-bd7156baface",
+                        "slug": "unisex/phu-kien/balo"
+                    },
+                    {
+                        "children": [],
+                        "id": "8f6dda1f-131c-4441-a2d0-2a133d1305a0",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Nón",
+                        "parentId": "88f66ee0-7479-4268-a085-bd7156baface",
+                        "slug": "unisex/phu-kien/non"
+                    },
+                    {
+                        "children": [],
+                        "id": "af5234ca-da0d-437a-a61b-d311bcd390cb",
+                        "imageUrl": null,
+                        "isActive": true,
+                        "name": "Túi tote",
+                        "parentId": "88f66ee0-7479-4268-a085-bd7156baface",
+                        "slug": "unisex/phu-kien/tui-tote"
+                    }
+                ],
+                "id": "88f66ee0-7479-4268-a085-bd7156baface",
+                "imageUrl": null,
+                "isActive": true,
+                "name": "Phụ kiện",
+                "parentId": "4d58c048-008d-4bb9-872f-75ff156272d8",
+                "slug": "unisex/phu-kien"
+            },
+            {
+                "children": [],
+                "id": "71f73384-46d0-4485-9e76-3368a4609a08",
+                "imageUrl": null,
+                "isActive": true,
+                "name": "Sneaker",
+                "parentId": "4d58c048-008d-4bb9-872f-75ff156272d8",
+                "slug": "unisex/sneaker"
+            }
+        ],
+        "id": "4d58c048-008d-4bb9-872f-75ff156272d8",
+        "imageUrl": "https://canifa.com/blog/wp-content/uploads/2024/08/ao-thun-unisex-la-gi-5.webp",
+        "isActive": true,
+        "name": "Unisex",
+        "parentId": null,
+        "slug": "unisex"
+    }
+]

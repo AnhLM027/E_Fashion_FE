@@ -2,6 +2,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { orderApi } from "@/features/orders/api/order.api";
 import { formatFullDateTime } from "@/utils/format";
+import { Star } from "lucide-react";
+import { ratingApi } from "@/features/ratings/api/ratingApi";
+import { toast } from "sonner";
 
 const formatCurrency = (value?: number) =>
   new Intl.NumberFormat("vi-VN", {
@@ -50,17 +53,38 @@ const paymentMethodLabel: Record<string, string> = {
 };
 
 export default function OrderDetailPage() {
-  const { orderId } = useParams();
   const navigate = useNavigate();
-
+  const { orderId } = useParams();
   const [order, setOrder] = useState<any>(null);
+
+  const [ratings, setRatings] = useState<Record<string, any>>({});
+  const [ratingMap, setRatingMap] = useState<Record<string, number>>({});
+  const [reviewMap, setReviewMap] = useState<Record<string, string>>({});
+
   const [loading, setLoading] = useState(true);
+
+  const fetchRatings = async (orderId: string) => {
+    try {
+      const ratings = await ratingApi.getOrderRatings(orderId);
+
+      const results: Record<string, any> = {};
+
+      ratings.forEach((r) => {
+        results[r.orderItemId] = r;
+      });
+
+      setRatings(results);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
         const res = await orderApi.getOrderById(orderId!);
         setOrder(res);
+        await fetchRatings(res.items);
       } catch (err) {
         console.error(err);
       } finally {
@@ -70,6 +94,26 @@ export default function OrderDetailPage() {
 
     if (orderId) fetchOrder();
   }, [orderId]);
+
+  const submitRating = async (orderItemId: string) => {
+    try {
+      const res = await ratingApi.createRating({
+        orderItemId,
+        rating: ratingMap[orderItemId] || 5,
+        reviewText: reviewMap[orderItemId] || "",
+      });
+
+      setRatings((prev) => ({
+        ...prev,
+        [orderItemId]: res,
+      }));
+
+      toast.success("Đánh giá thành công");
+    } catch (err) {
+      console.error(err);
+      toast.error("Không thể đánh giá sản phẩm");
+    }
+  };
 
   if (loading)
     return (
@@ -162,7 +206,7 @@ export default function OrderDetailPage() {
 
         {order.items.map((item: any) => (
           <div
-            key={item.variantSizeId}
+            key={item.orderItemId}
             className="flex flex-col sm:flex-row gap-6 border-b pb-6 last:border-none"
           >
             <img
@@ -186,6 +230,78 @@ export default function OrderDetailPage() {
               <p className="text-sm text-gray-500">
                 Số lượng: x{item.quantity}
               </p>
+
+              {/* RATING FORM */}
+              {order.status === "DELIVERED" && (
+                <div className="mt-4">
+                  {ratings[item.orderItemId] ? (
+                    <div className="bg-green-50 border border-green-200 p-4 rounded-xl space-y-2">
+                      <div className="flex gap-1">
+                        {Array.from({
+                          length: ratings[item.orderItemId].rating,
+                        }).map((_, i) => (
+                          <Star
+                            key={i}
+                            size={18}
+                            className="fill-yellow-400 text-yellow-400"
+                          />
+                        ))}
+                      </div>
+
+                      <p className="text-sm text-gray-700">
+                        {ratings[item.orderItemId].reviewText}
+                      </p>
+
+                      <p className="text-xs text-green-600 font-medium">
+                        Bạn đã đánh giá sản phẩm này
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 p-4 rounded-xl space-y-3">
+                      <p className="text-sm font-medium">Đánh giá sản phẩm</p>
+
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={20}
+                            onClick={() =>
+                              setRatingMap((prev) => ({
+                                ...prev,
+                                [item.orderItemId]: star,
+                              }))
+                            }
+                            className={`cursor-pointer ${
+                              star <= (ratingMap[item.orderItemId] || 0)
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "text-gray-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      <textarea
+                        placeholder="Chia sẻ cảm nhận của bạn..."
+                        className="w-full border rounded-lg p-2 text-sm"
+                        value={reviewMap[item.orderItemId] || ""}
+                        onChange={(e) =>
+                          setReviewMap((prev) => ({
+                            ...prev,
+                            [item.orderItemId]: e.target.value,
+                          }))
+                        }
+                      />
+
+                      <button
+                        onClick={() => submitRating(item.orderItemId)}
+                        className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:opacity-90"
+                      >
+                        Gửi đánh giá
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="text-right space-y-1">

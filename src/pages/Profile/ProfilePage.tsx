@@ -117,7 +117,8 @@ const ProfilePage = () => {
             <img
               src={
                 form.avatarUrl ||
-                `https://ui-avatars.com/api/?name=${form.fullName}`
+                // `https://ui-avatars.com/api/?name=${form.email}` ||
+                form.fullName ? `https://ui-avatars.com/api/?name=${form.fullName}` : `https://ui-avatars.com/api/?name=${form.email}`
               }
               alt="avatar"
               className="w-28 h-28 rounded-full object-cover border mx-auto"

@@ -1,73 +1,63 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { ShoppingBag, Heart } from "lucide-react";
+import { ShoppingBag, Heart, ChevronRight, Shirt } from "lucide-react";
+import { toast } from "sonner";
 
-import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
 import { useCategoryTree } from "@/hooks/useCategoryTree";
-
 import { useProductDetail } from "@/features/products/hooks/useProductDetail";
 import { useProducts } from "@/features/products/hooks/useProducts";
 import { ProductCard } from "@/features/products/components/ProductCard";
-import { FeaturedProducts } from "@/components/home/featured-products";
 import { addCartItem } from "@/features/cart/slices/cartSlice";
 import {
   addToWishlist,
   removeFromWishlist,
   fetchWishlist,
 } from "@/features/wishlist/slices/wishlistSlice";
-
 import { Button } from "@/components/ui/Button";
-
-import { toast } from "sonner";
-
 import type { AppDispatch, RootState } from "@/store/store";
+import { ProductRatings } from "@/features/ratings/components/ProductRatings";
+import { ProductPolicy } from "@/features/products/components/ProductPolicy";
+import {
+  type RatingSummary,
+  ratingApi,
+} from "@/features/ratings/api/ratingApi";
+import { formatProductDescription } from "@/utils/format";
 
+// Logic sizeMap giữ nguyên
 const sizeMap = [
-  {
-    height: [160, 164],
-    weight: [54, 62],
-    size: "S",
-  },
-  {
-    height: [164, 172],
-    weight: [62, 68],
-    size: "M",
-  },
-  {
-    height: [170, 176],
-    weight: [68, 76],
-    size: "L",
-  },
-  {
-    height: [174, 178],
-    weight: [76, 84],
-    size: "XL",
-  },
-  {
-    height: [176, 180],
-    weight: [84, 90],
-    size: "XXL",
-  },
+  { height: [155, 162], weight: [45, 54], size: "S" },
+  { height: [155, 162], weight: [54, 62], size: "M" },
+
+  { height: [162, 168], weight: [50, 58], size: "S" },
+  { height: [162, 168], weight: [58, 66], size: "M" },
+  { height: [162, 168], weight: [66, 74], size: "L" },
+
+  { height: [168, 174], weight: [56, 64], size: "M" },
+  { height: [168, 174], weight: [64, 72], size: "L" },
+  { height: [168, 174], weight: [72, 80], size: "XL" },
+
+  { height: [174, 178], weight: [60, 68], size: "L" },
+  { height: [174, 178], weight: [68, 78], size: "XL" },
+  { height: [174, 178], weight: [78, 88], size: "XXL" },
+
+  { height: [178, 185], weight: [65, 75], size: "XL" },
+  { height: [178, 185], weight: [75, 90], size: "XXL" },
 ];
 
 export default function ProductDetailPage() {
   const user = useSelector((state: RootState) => state.auth.user);
   const isAuthenticated = !!user;
-
   const { productSlug } = useParams();
-
   const dispatch = useDispatch<AppDispatch>();
-  const imageRef = useRef<HTMLImageElement>(null);
-
   const { product, variants, loading, fetchDetail } = useProductDetail();
   const { products } = useProducts();
+  const imageRef = useRef<HTMLImageElement>(null);
+
+  const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
 
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
-  const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
-
   const [wishlistIds, setWishlistIds] = useState<Set<string>>(new Set());
 
   const [selectedVariant, setSelectedVariant] = useState<
@@ -91,6 +81,12 @@ export default function ProductDetailPage() {
   const [weight, setWeight] = useState<number | null>(null);
   const [suggestedSize, setSuggestedSize] = useState<string | null>(null);
 
+  const [summary, setSummary] = useState<RatingSummary | null>(null);
+
+  const [tab, setTab] = useState<"description" | "policy" | "ratings">(
+    "description",
+  );
+
   const suggestSize = (height: number, weight: number) => {
     const found = sizeMap.find(
       (item) =>
@@ -112,6 +108,11 @@ export default function ProductDetailPage() {
       setSuggestedSize(suggestSize(height, weight));
     }
   }, [height, weight]);
+
+  useEffect(() => {
+    if (!product) return;
+    ratingApi.getProductRatingSummary(product.id).then(setSummary);
+  }, [product]);
 
   useEffect(() => {
     if (!suggestedSize || !selectedVariant) return;
@@ -342,56 +343,6 @@ export default function ProductDetailPage() {
     return sorted[0]?.imageUrl;
   };
 
-  const animateToCart = () => {
-    const img = imageRef.current;
-    const cartIcon = document.getElementById("cart-icon");
-
-    if (!img || !cartIcon) return;
-
-    const imgRect = img.getBoundingClientRect();
-    const cartRect = cartIcon.getBoundingClientRect();
-
-    const flyingImg = img.cloneNode(true) as HTMLImageElement;
-
-    flyingImg.style.position = "fixed";
-    flyingImg.style.left = imgRect.left + "px";
-    flyingImg.style.top = imgRect.top + "px";
-    flyingImg.style.width = imgRect.width + "px";
-    flyingImg.style.height = imgRect.height + "px";
-    flyingImg.style.objectFit = "cover";
-    flyingImg.style.borderRadius = "16px";
-    flyingImg.style.transition = "all 800ms cubic-bezier(.65,-0.01,.26,1)";
-    flyingImg.style.zIndex = "9999";
-    flyingImg.style.pointerEvents = "none";
-
-    document.body.appendChild(flyingImg);
-
-    requestAnimationFrame(() => {
-      flyingImg.style.left = cartRect.left + cartRect.width / 2 - 20 + "px";
-      flyingImg.style.top = cartRect.top + cartRect.height / 2 - 20 + "px";
-      flyingImg.style.width = "40px";
-      flyingImg.style.height = "40px";
-      flyingImg.style.opacity = "0.3";
-      flyingImg.style.transform = "scale(0.5)";
-    });
-
-    setTimeout(() => flyingImg.remove(), 800);
-  };
-
-  /* ============================= */
-  /* RELATED PRODUCTS              */
-  /* ============================= */
-
-  // const relatedProducts = useMemo(() => {
-  //   if (!product) return [];
-
-  //   return products
-  //     .filter(
-  //       (p) => p.categoryName === product.categoryName && p.id !== product.id,
-  //     )
-  //     .slice(0, 4);
-  // }, [products, product]);
-
   const relatedByCategory = useMemo(() => {
     if (!product) return [];
 
@@ -508,165 +459,201 @@ export default function ProductDetailPage() {
         </div>
       </nav>
       <main className="max-w-7xl mx-auto px-4 py-16 space-y-24">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
+        <div className="grid grid-cols-1 lg:grid-cols-11 gap-20">
           {/* IMAGE SECTION */}
-          <div className="flex gap-6">
-            <div className="flex-1 aspect-3/4 overflow-hidden rounded-2xl bg-neutral-100">
-              <img
-                ref={imageRef}
-                src={activeImage}
-                alt={product.name}
-                onClick={() => {
-                  const index = sortedImages.findIndex(
-                    (img) => img.imageUrl === activeImage,
-                  );
-                  setPreviewIndex(index >= 0 ? index : 0);
-                  setPreviewImage(activeImage || null);
-                  setZoom(1);
-                }}
-                className="h-full w-full object-cover cursor-zoom-in"
-              />
-            </div>
-
-            <div className="flex flex-col gap-3">
-              {sortedImages.map((img) => (
-                <button
+          <div className="lg:col-span-6 space-y-4">
+            {/* FIRST ROW - 2 BIG IMAGES */}
+            <div className="grid grid-cols-2 gap-4">
+              {sortedImages.slice(0, 2).map((img) => (
+                <div
                   key={img.id}
-                  onClick={() => setActiveImage(img.imageUrl)}
-                  className={`h-20 w-16 overflow-hidden rounded-lg border ${
-                    activeImage === img.imageUrl
-                      ? "border-black"
-                      : "border-neutral-200"
-                  }`}
+                  className="aspect-square overflow-hidden rounded-xl bg-neutral-100"
                 >
                   <img
                     src={img.imageUrl}
-                    className="h-full w-full object-cover cursor-pointer"
+                    alt={product.name}
+                    onClick={() => {
+                      const index = sortedImages.findIndex(
+                        (i) => i.imageUrl === img.imageUrl,
+                      );
+                      setPreviewIndex(index);
+                      setPreviewImage(img.imageUrl);
+                      setZoom(1);
+                    }}
+                    className="w-full h-full object-cover cursor-zoom-in"
                   />
-                </button>
+                </div>
               ))}
             </div>
+
+            {/* OTHER IMAGES - GRID 3 */}
+            {sortedImages.length > 2 && (
+              <div className="grid grid-cols-3 gap-4">
+                {sortedImages.slice(2).map((img) => (
+                  <div
+                    key={img.id}
+                    className="aspect-square overflow-hidden rounded-xl bg-neutral-100"
+                  >
+                    <img
+                      src={img.imageUrl}
+                      alt={product.name}
+                      onClick={() => {
+                        const index = sortedImages.findIndex(
+                          (i) => i.imageUrl === img.imageUrl,
+                        );
+                        setPreviewIndex(index);
+                        setPreviewImage(img.imageUrl);
+                        setZoom(1);
+                      }}
+                      className="w-full h-full object-cover cursor-zoom-in"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* INFO SECTION */}
-          <div className="space-y-10">
-            <div>
-              <h1 className="text-3xl font-medium">{product.name}</h1>
-              <p className="mt-2 text-xs uppercase tracking-widest text-neutral-500">
+          <div className="lg:col-span-5 space-y-12">
+            {/* PRODUCT TITLE */}
+            <div className="space-y-2 border-b pb-6">
+              <h1 className="text-3xl font-semibold tracking-tight">
+                {product.name}
+              </h1>
+
+              <p className="text-xs uppercase tracking-widest text-neutral-500">
                 SKU: {selectedSize?.sku}
               </p>
-            </div>
 
-            <div className="flex items-end gap-4">
-              <span className="text-2xl font-semibold">
-                {selectedSize?.salePrice?.toLocaleString()}₫
-              </span>
+              {summary && (
+                <div className="flex items-center gap-2 pt-2">
+                  <span className="text-sm font-medium">
+                    {summary.averageRating.toFixed(1)}
+                  </span>
 
-              {selectedSize?.originalPrice !== selectedSize?.salePrice && (
-                <span className="text-sm text-neutral-400 line-through">
-                  {selectedSize?.originalPrice?.toLocaleString()}₫
-                </span>
+                  <span className="text-yellow-500 text-sm">★</span>
+
+                  <span className="text-sm text-neutral-500">
+                    ({summary.totalRatings} đánh giá)
+                  </span>
+                </div>
               )}
             </div>
 
-            {selectedSize && (
-              <div className="text-sm">
-                {selectedSize.availableStock > 10 && (
-                  <span className="text-green-600">
-                    Còn {selectedSize.availableStock} sản phẩm
+            {/* PRICE */}
+            <div className="space-y-2">
+              <div className="flex items-end gap-3">
+                <span className="text-3xl font-semibold">
+                  {selectedSize?.salePrice?.toLocaleString()}₫
+                </span>
+
+                {selectedSize?.originalPrice !== selectedSize?.salePrice && (
+                  <span className="text-sm text-neutral-400 line-through">
+                    {selectedSize?.originalPrice?.toLocaleString()}₫
                   </span>
                 )}
+              </div>
 
-                {selectedSize.availableStock > 0 &&
-                  selectedSize.availableStock <= 10 && (
-                    <span className="text-orange-600 font-medium">
-                      Sắp hết hàng – chỉ còn {selectedSize.availableStock}
+              {selectedSize && (
+                <div className="text-sm">
+                  {selectedSize.availableStock > 10 && (
+                    <span className="text-green-600">
+                      Còn {selectedSize.availableStock} sản phẩm
                     </span>
                   )}
 
-                {selectedSize.availableStock === 0 && (
-                  <span className="text-red-600 font-medium">Hết hàng</span>
-                )}
-              </div>
-            )}
+                  {selectedSize.availableStock > 0 &&
+                    selectedSize.availableStock <= 10 && (
+                      <span className="text-orange-600 font-medium">
+                        Sắp hết hàng – chỉ còn {selectedSize.availableStock}
+                      </span>
+                    )}
+
+                  {selectedSize.availableStock === 0 && (
+                    <span className="text-red-600 font-medium">Hết hàng</span>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* COLOR */}
-            <div>
-              <p className="mb-3 text-xs uppercase tracking-widest text-neutral-600">
+            <div className="space-y-4">
+              <p className="text-xs uppercase tracking-widest text-neutral-500">
                 Màu sắc
               </p>
 
-              <div>
-                <p className="mb-2 text-sm font-medium">
-                  {selectedVariant?.colorName}
-                </p>
+              <p className="text-sm font-medium">
+                {selectedVariant?.colorName}
+              </p>
 
-                <div className="flex gap-3">
-                  {variants.map((variant) => {
-                    const imageUrl = getPrimaryImage(variant);
+              <div className="flex gap-3">
+                {variants.map((variant) => {
+                  const imageUrl = getPrimaryImage(variant);
+                  const isActive = selectedVariant?.id === variant.id;
 
-                    const isActive = selectedVariant?.id === variant.id;
+                  const isOutOfStock = !variant.sizes?.some(
+                    (size) => size.availableStock > 0,
+                  );
 
-                    const isOutOfStock = !variant.sizes?.some(
-                      (size) => size.availableStock > 0,
-                    );
+                  return (
+                    <button
+                      key={variant.id}
+                      onClick={() => handleSelectVariant(variant)}
+                      disabled={isOutOfStock}
+                      className={`relative h-16 w-16 overflow-hidden rounded-lg border transition
+            ${
+              isActive
+                ? "border-black ring-1 ring-black"
+                : "border-neutral-300 hover:border-black"
+            }
+            ${isOutOfStock ? "opacity-40 cursor-not-allowed" : ""}`}
+                    >
+                      <img
+                        src={imageUrl}
+                        alt={variant.colorName}
+                        className="h-full w-full object-cover"
+                      />
 
-                    return (
-                      <button
-                        key={variant.id}
-                        onClick={() => handleSelectVariant(variant)}
-                        disabled={isOutOfStock}
-                        className={`relative h-16 w-16 rounded-lg overflow-hidden border transition ${
-                          isActive
-                            ? "border-black"
-                            : "border-neutral-300 hover:border-black"
-                        } ${isOutOfStock ? "opacity-40 cursor-not-allowed" : ""}`}
-                      >
-                        <img
-                          src={imageUrl}
-                          alt={variant.colorName}
-                          className="h-full w-full object-cover"
-                        />
-
-                        {/* Gạch chéo nếu hết hàng */}
-                        {isOutOfStock && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="h-[2px] w-full bg-black rotate-45" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                      {isOutOfStock && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="h-[2px] w-full bg-black rotate-45" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* SIZE */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs uppercase tracking-widest text-neutral-600">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-widest text-neutral-500">
                   Kích thước
                 </p>
 
                 <button
                   onClick={() => setIsSizeGuideOpen(true)}
-                  className="text-xs text-black underline hover:text-neutral-600 transition"
+                  className="flex items-center gap-2 text-xs text-neutral-700 hover:text-black underline underline-offset-4 transition"
                 >
+                  <Shirt className="h-4 w-4" />
                   Hướng dẫn chọn size
                 </button>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 {selectedVariant?.sizes?.map((size) => (
                   <button
                     key={size.id}
                     disabled={size.availableStock === 0}
                     onClick={() => handleSelectSize(size)}
-                    className={`h-10 w-12 text-sm border ${
-                      selectedSize?.id === size.id
-                        ? "border-black"
-                        : "border-neutral-300"
-                    } ${size.availableStock === 0 && "opacity-30 cursor-not-allowed"}`}
+                    className={`h-11 w-14 text-sm border rounded-md transition
+          ${
+            selectedSize?.id === size.id
+              ? "border-black bg-black text-white"
+              : "border-neutral-300 hover:border-black"
+          }
+          ${size.availableStock === 0 && "opacity-30 cursor-not-allowed"}`}
                   >
                     {size.sizeName}
                   </button>
@@ -675,20 +662,20 @@ export default function ProductDetailPage() {
             </div>
 
             {/* QUANTITY */}
-            <div>
-              <p className="mb-3 text-xs uppercase tracking-widest text-neutral-600">
+            <div className="space-y-3">
+              <p className="text-xs uppercase tracking-widest text-neutral-500">
                 Số lượng
               </p>
 
-              <div className="flex items-center border w-fit">
+              <div className="flex items-center border rounded-md w-fit overflow-hidden">
                 <button
                   onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                  className="px-4 py-2 text-lg"
+                  className="px-4 py-2 text-lg hover:bg-neutral-100 transition"
                 >
                   -
                 </button>
 
-                <span className="px-6">{quantity}</span>
+                <span className="px-6 font-medium">{quantity}</span>
 
                 <button
                   onClick={() =>
@@ -697,27 +684,27 @@ export default function ProductDetailPage() {
                       Math.min(selectedSize.availableStock, prev + 1),
                     )
                   }
-                  className="px-4 py-2 text-lg"
+                  className="px-4 py-2 text-lg hover:bg-neutral-100 transition"
                 >
                   +
                 </button>
               </div>
             </div>
 
-            {/* ADD TO CART */}
-            <div className="flex gap-4">
-              {/* Add to cart */}
+            {/* ACTIONS */}
+            <div className="flex gap-4 pt-4">
               <Button
                 size="lg"
-                className="flex-1 h-14 rounded-none bg-black text-white hover:bg-neutral-800"
+                className="flex-1 h-14 bg-black text-white hover:bg-neutral-800 transition"
                 disabled={!selectedSize || selectedSize.availableStock === 0}
                 onClick={async () => {
                   if (!selectedSize) return;
+
                   if (!isAuthenticated) {
                     toast.info("Vui lòng đăng nhập để thêm vào giỏ hàng 🛒");
-                    // navigate("/login");
                     return;
                   }
+
                   try {
                     await dispatch(
                       addCartItem({
@@ -725,8 +712,6 @@ export default function ProductDetailPage() {
                         quantity,
                       }),
                     ).unwrap();
-
-                    animateToCart();
 
                     toast.success(
                       `Đã thêm ${quantity} sản phẩm vào giỏ hàng 🛒`,
@@ -746,15 +731,16 @@ export default function ProductDetailPage() {
                 Thêm vào giỏ hàng
               </Button>
 
-              {/* Wishlist */}
               <button
                 onClick={() => handleToggleWishlist(product.id)}
                 disabled={wishlistLoading}
-                className={`h-14 w-14 flex items-center justify-center border transition ${
-                  isWishlisted
-                    ? "bg-black text-white border-black"
-                    : "border-neutral-300 hover:border-black"
-                } ${wishlistLoading ? "opacity-60 cursor-not-allowed" : ""}`}
+                className={`h-14 w-14 flex items-center justify-center border rounded-md transition
+      ${
+        isWishlisted
+          ? "bg-black text-white border-black"
+          : "border-neutral-300 hover:border-black"
+      }
+      ${wishlistLoading ? "opacity-60 cursor-not-allowed" : ""}`}
               >
                 <Heart
                   className={`h-5 w-5 ${
@@ -766,12 +752,62 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* DESCRIPTION */}
-        <div className="max-w-3xl space-y-8">
-          <h2 className="text-xl font-medium">Mô tả sản phẩm</h2>
+        <div className="max-w-full mt-16">
+          {/* TAB HEADER */}
+          <div className="flex border-b border-neutral-200 mb-8">
+            <button
+              onClick={() => setTab("description")}
+              className={`px-6 py-3 text-sm font-medium transition
+      ${
+        tab === "description"
+          ? "border-b-2 border-black text-black"
+          : "text-neutral-500 hover:text-black"
+      }`}
+            >
+              Mô tả sản phẩm
+            </button>
 
-          <div className="bg-neutral-50 rounded-2xl p-8 whitespace-pre-line text-sm text-neutral-700 leading-relaxed">
-            {product.description}
+            <button
+              onClick={() => setTab("policy")}
+              className={`px-6 py-3 text-sm font-medium transition
+      ${
+        tab === "policy"
+          ? "border-b-2 border-black text-black"
+          : "text-neutral-500 hover:text-black"
+      }`}
+            >
+              Chính sách đổi & trả
+            </button>
+
+            <button
+              onClick={() => setTab("ratings")}
+              className={`px-6 py-3 text-sm font-medium transition
+      ${
+        tab === "ratings"
+          ? "border-b-2 border-black text-black"
+          : "text-neutral-500 hover:text-black"
+      }`}
+            >
+              Đánh giá
+            </button>
+          </div>
+
+          {/* TAB CONTENT */}
+          <div>
+            {/* DESCRIPTION */}
+            {tab === "description" && (
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: formatProductDescription(product.description),
+                }}
+              />
+            )}
+
+            {/* POLICY */}
+            {tab === "policy" && <ProductPolicy />}
+
+            {/* RATINGS */}
+            {tab === "ratings" && <ProductRatings productId={product.id} />}
           </div>
         </div>
 
@@ -783,10 +819,10 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
               {relatedByCategory.map((item) => (
                 <ProductCard
-                  key={product.id}
-                  product={product}
-                  isWishlisted={wishlistIds.has(product.id)}
-                  onToggleWishlist={() => handleToggleWishlist(product.id)}
+                  key={item.id}
+                  product={item}
+                  isWishlisted={wishlistIds.has(item.id)}
+                  onToggleWishlist={() => handleToggleWishlist(item.id)}
                 />
               ))}
             </div>

@@ -1,0 +1,56 @@
+[
+    {
+        "id": "13d95245-7d36-4d87-9232-566a569aaca8",
+        "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Gucci_logo.svg/960px-Gucci_logo.svg.png",
+        "name": "Gucci",
+        "slug": "gucci"
+    },
+    {
+        "id": "21e92e6f-c5d4-4ca4-a66f-412ae5318596",
+        "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Dior_Logo.svg/960px-Dior_Logo.svg.png",
+        "name": "Dior",
+        "slug": "dior"
+    },
+    {
+        "id": "3520fff8-072e-464e-b939-1df1f1b7562d",
+        "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
+        "name": "Zara",
+        "slug": "zara"
+    },
+    {
+        "id": "59547dbc-ce0d-4c0f-88bb-0dee5592e38c",
+        "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg",
+        "name": "Nike",
+        "slug": "nike"
+    },
+    {
+        "id": "5b3c1459-1034-412e-a872-f6e7601f1a06",
+        "logoUrl": "https://upload.wikimedia.org/wikipedia/en/d/da/Puma_complete_logo.svg",
+        "name": "Puma",
+        "slug": "puma"
+    },
+    {
+        "id": "93dd3018-e0ef-49aa-9235-afcddde47821",
+        "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/5/53/H%26M-Logo.svg",
+        "name": "H&M",
+        "slug": "h-m"
+    },
+    {
+        "id": "9f407dda-2405-4323-b66b-f3514358cb80",
+        "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/9/92/UNIQLO_logo.svg",
+        "name": "Uniqlo",
+        "slug": "uniqlo"
+    },
+    {
+        "id": "b44fae04-1bac-4098-bb87-0c598837bc90",
+        "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/2/20/Adidas_Logo.svg",
+        "name": "Adidas",
+        "slug": "adidas"
+    },
+    {
+        "id": "e46519f1-81d9-4f0b-93e1-459add9a300f",
+        "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/7/76/Louis_Vuitton_logo_and_wordmark.svg",
+        "name": "Louis Vuitton",
+        "slug": "louis-vuitton"
+    }
+]

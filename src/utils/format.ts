@@ -1,3 +1,5 @@
+import DOMPurify from "dompurify";
+
 /**
  * Format currency value
  */
@@ -129,3 +131,102 @@ export const formatDateLabel = (dateString?: string) => {
 
     return date.toLocaleDateString("vi-VN");
 };
+
+export function formatProductDescription(text: string): string {
+    if (!text) return "";
+
+    const lines = text
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+    let rows: string[] = [];
+
+    let currentKey = "";
+    let buffer: string[] = [];
+
+    const flushRow = () => {
+        if (!currentKey) return;
+
+        let valueHtml = "";
+
+        // special section: washing guide
+        if (currentKey === "HƯỚNG DẪN GIẶT ỦI") {
+            const subRows = buffer.map((line) => {
+                if (line.includes(":")) {
+                    const [k, ...rest] = line.split(":");
+                    const v = rest.join(":").trim();
+
+                    return `
+            <tr class="border-b last:border-none">
+              <td class="px-3 py-2 w-32 bg-neutral-50 font-medium text-xs">
+                ${k}
+              </td>
+              <td class="px-3 py-2 text-xs text-neutral-700">
+                ${v}
+              </td>
+            </tr>
+          `;
+                }
+
+                return `
+          <tr>
+            <td colspan="2" class="px-3 py-2 text-xs text-neutral-700">
+              ${line}
+            </td>
+          </tr>
+        `;
+            });
+
+            valueHtml = `
+        <div class="overflow-x-auto">
+          <table class="w-full border border-neutral-200 rounded-md overflow-hidden text-xs">
+            <tbody>
+              ${subRows.join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+        } else {
+            valueHtml = buffer.join("<br>");
+        }
+
+        rows.push(`
+      <tr class="border-b last:border-none">
+        <td class="w-48 bg-neutral-50 font-semibold text-sm px-4 py-3 align-top">
+          ${currentKey}
+        </td>
+        <td class="text-sm text-neutral-700 px-4 py-3 leading-6">
+          ${valueHtml}
+        </td>
+      </tr>
+    `);
+
+        buffer = [];
+    };
+
+    for (const line of lines) {
+
+        if (line.startsWith("###")) {
+            flushRow();
+            currentKey = line.replace(/^###\s*/, "");
+            continue;
+        }
+
+        buffer.push(line);
+    }
+
+    flushRow();
+
+    const html = `
+    <div class="overflow-x-auto">
+      <table class="w-full border border-neutral-200 rounded-lg overflow-hidden text-sm">
+        <tbody>
+          ${rows.join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+    return DOMPurify.sanitize(html);
+}

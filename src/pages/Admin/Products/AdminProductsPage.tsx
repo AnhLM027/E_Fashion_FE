@@ -65,6 +65,8 @@ const AdminProductsPage = () => {
     thumbnailUrl: "",
   });
 
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   /* ================= FETCH ================= */
 
   const fetchProducts = async () => {
@@ -174,6 +176,20 @@ const AdminProductsPage = () => {
   const handleToggleStatus = async (id: string, active: boolean) => {
     await adminProductApi.setStatus(id, !active);
     fetchProducts();
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const preview = URL.createObjectURL(file);
+
+    setPreviewImage(preview);
+
+    setForm((prev) => ({
+      ...prev,
+      thumbnailUrl: preview,
+    }));
   };
 
   /* ================= FILTER ================= */
@@ -467,93 +483,109 @@ const AdminProductsPage = () => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white w-full max-w-lg rounded-2xl shadow-xl p-6 relative animate-[fadeIn_.2s_ease-out]"
+            className="bg-white w-full max-w-5xl rounded-2xl shadow-xl p-8 relative animate-[fadeIn_.2s_ease-out]"
           >
             <h2 className="text-xl font-semibold mb-6">
               {editingId ? "Update Product" : "Create Product"}
             </h2>
 
-            <div className="space-y-4">
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="Product name"
-                className="w-full border px-4 py-2 rounded-lg"
-              />
-
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                placeholder="Description"
-                rows={3}
-                className="w-full border px-4 py-2 rounded-lg"
-              />
-
-              <select
-                name="brandId"
-                value={form.brandId}
-                onChange={handleChange}
-                className="w-full border px-4 py-2 rounded-lg"
-              >
-                <option value="">Select brand</option>
-                {brands.map((brand) => (
-                  <option key={brand.id} value={brand.id}>
-                    {brand.name}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                name="categoryId"
-                value={form.categoryId}
-                onChange={handleChange}
-                className="w-full border px-4 py-2 rounded-lg"
-              >
-                <option value="">Select category</option>
-                {leafCategoryOptions.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {"_ ".repeat(cat.level)}
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-
-              <input
-                type="url"
-                name="thumbnailUrl"
-                value={form.thumbnailUrl}
-                onChange={handleChange}
-                placeholder="Thumbnail URL"
-                className="w-full border px-4 py-2 rounded-lg"
-              />
-
-              {form.thumbnailUrl && (
-                <div className="mt-2">
-                  <img
-                    src={form.thumbnailUrl}
-                    alt="Preview"
-                    className="w-32 h-32 object-cover rounded-lg border"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* <label className="flex items-center gap-2">
+            {/* FORM GRID */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* LEFT */}
+              <div className="space-y-4">
                 <input
-                  type="checkbox"
-                  name="isActive"
-                  checked={form.isActive}
+                  name="name"
+                  value={form.name}
                   onChange={handleChange}
+                  placeholder="Product name"
+                  className="w-full border px-4 py-2 rounded-lg"
                 />
-                Active
-              </label> */}
+
+                <select
+                  name="brandId"
+                  value={form.brandId}
+                  onChange={handleChange}
+                  className="w-full border px-4 py-2 rounded-lg"
+                >
+                  <option value="">Select brand</option>
+                  {brands.map((brand) => (
+                    <option key={brand.id} value={brand.id}>
+                      {brand.name}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  name="categoryId"
+                  value={form.categoryId}
+                  onChange={handleChange}
+                  className="w-full border px-4 py-2 rounded-lg"
+                >
+                  <option value="">Select category</option>
+                  {leafCategoryOptions.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {"_ ".repeat(cat.level)}
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="url"
+                  name="thumbnailUrl"
+                  value={form.thumbnailUrl}
+                  onChange={handleChange}
+                  placeholder="Thumbnail URL"
+                  className="w-full border px-4 py-2 rounded-lg"
+                />
+              </div>
+
+              {/* RIGHT */}
+              {/* RIGHT - IMAGE PREVIEW */}
+              <div className="space-y-3">
+                <div className="text-sm font-medium text-gray-600">
+                  Image Preview
+                </div>
+
+                <div className="relative w-full h-64 rounded-xl border bg-gray-50 overflow-hidden flex items-center justify-center">
+                  {form.thumbnailUrl ? (
+                    <img
+                      src={form.thumbnailUrl}
+                      alt="Preview"
+                      className="w-full h-full object-contain transition duration-300 hover:scale-105"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div className="text-gray-400 text-sm">
+                      No image selected
+                    </div>
+                  )}
+                </div>
+
+                {form.thumbnailUrl && (
+                  <div className="text-xs text-gray-400 break-all">
+                    {form.thumbnailUrl}
+                  </div>
+                )}
+              </div>
+
+              {/* DESCRIPTION FULL WIDTH */}
+              <div className="col-span-2">
+                <textarea
+                  name="description"
+                  value={form.description}
+                  onChange={handleChange}
+                  placeholder="Product description..."
+                  rows={6}
+                  className="w-full border px-4 py-3 rounded-lg"
+                />
+              </div>
             </div>
 
-            <div className="flex justify-end gap-3 mt-6">
+            {/* ACTIONS */}
+            <div className="flex justify-end gap-3 mt-8">
               <button
                 onClick={() => setOpenModal(false)}
                 className="px-4 py-2 rounded-lg border"

@@ -9,10 +9,10 @@ import re
 # CONFIG
 # ==============================
 
-JSON_FILE = "giay-dep-nam.json"
+JSON_FILE = "vi-da.json"
 
 EMAIL = "ad@gmail.com"
-PASSWORD = "123"
+PASSWORD = "123456"
 
 BASE_URL = "http://localhost:8080"
 
@@ -191,6 +191,22 @@ with open(JSON_FILE, "r", encoding="utf-8") as f:
 products = raw_data["data"]
 print(f"Found {len(products)} products")
 
+def get_leaf_nodes(categories):
+    leaves = []
+
+    def dfs(node, depth=0):
+        children = node.get("children", [])
+
+        if not children and depth > 0:
+            leaves.append(node)
+        else:
+            for child in children:
+                dfs(child, depth + 1)
+
+    for root in categories:
+        dfs(root)
+
+    return leaves
 
 # ==============================
 # MAIN FLOW
@@ -198,9 +214,48 @@ print(f"Found {len(products)} products")
 
 login()
 
-COLOR_MAP = load_colors_from_api()
-CATEGORIES = load_categories_from_api()
+import json
+
+data = json.load(open("..\\scripts\\categories.json", "r", encoding="utf-8"))
+# api_categories = load_categories_from_api()
+# print(api_categories[0])
+CATEGORIES = get_leaf_nodes(data)
 BRANDS = load_brands_from_api()
+COLOR_MAP = load_colors_from_api()
+
+# print(CATEGORIES)
+
+# for leaf in CATEGORIES:
+#     print(leaf["name"], leaf["slug"])
+
+DESCRIPTION = """### TÊN SẢN PHẨM
+Quần Jeans Nam Hiệu Ứng Giặt Mài Aristino AJN2110S0
+### MÃ RÚT GỌN
+AJN2110S0
+### FORM DÁNG
+Dáng ôm / Slim fit
+### THIẾT KẾ
+Quần jeans phom slim fit với độ ôm vừa vặn giúp tôn dáng đôi chân mà vẫn thoải mái vận động.
+Quần có túi xẻ 2 bên và túi sau tiện lợi.
+Nút quần được thiết kế mang biểu tượng "Mặt trời huyền thoại" toả sáng với 12 tia rực rỡ.
+### CHẤT LIỆU
+99% Cotton giúp quần mềm mại, xốp nhẹ và thoáng khí  
+1% Spandex tạo sự co giãn
+### MÀU SẮC
+Xám 38
+### SIZE
+29/30/31/32/33/34/35
+### SẢN XUẤT
+Việt Nam
+### HƯỚNG DẪN GIẶT ỦI
+Giặt: Giặt bằng nước lạnh hoặc nước ấm nhẹ (dưới 30°C). Giặt riêng biệt với các màu sắc khác để tránh bị phai màu.
+Phơi: Phơi ở nơi thoáng mát, tránh ánh nắng trực tiếp để không làm phai màu và giữ độ bền của vải.
+Ủi: Ủi ở nhiệt độ thấp hoặc sử dụng chế độ ủi vải polyester trên bàn là để tránh làm hỏng bề mặt vải.
+Chất tẩy: Hạn chế sử dụng chất tẩy mạnh. Sử dụng chất tẩy nhẹ nếu cần để bảo vệ vải và giữ độ mới lâu dài.
+### LƯU Ý
+Lưu ý: Hình ảnh chỉ mang tính chất minh họa. Sản phẩm thực tế có thể khác về màu sắc so với hình ảnh minh họa do ánh sáng khi chụp ảnh hoặc do màn hình hiển thị trên thiết bị của khách hàng.
+"""
+
 
 for idx, item in enumerate(products, start=1):
 
@@ -214,7 +269,7 @@ for idx, item in enumerate(products, start=1):
 
     product_payload = {
         "name": item["title"],
-        "description": item["link"],
+        "description": DESCRIPTION,
         "categoryId": CATEGORY_ID,
         "brandId": BRAND_ID,
         "thumbnailUrl": item["thumbnail"],

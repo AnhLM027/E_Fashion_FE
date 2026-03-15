@@ -10,12 +10,12 @@ BASE_URL = "http://localhost:8080"
 
 LOGIN_URL = f"{BASE_URL}/api/auth/login"
 REFRESH_URL = f"{BASE_URL}/api/auth/refresh"
-BRAND_API = f"{BASE_URL}/api/admin/brands"
+CATEGORY_API = f"{BASE_URL}/api/admin/categories"
 
 EMAIL = "ad@gmail.com"
 PASSWORD = "123456"
 
-BRAND_FILE = "brands.json"
+CATEGORY_FILE = "categories.json"
 
 session = requests.Session()
 session.headers.update({
@@ -63,53 +63,51 @@ def safe_post(url, payload):
     return response
 
 
-def safe_get(url):
-    response = session.get(url)
-
-    if response.status_code == 401:
-        print("⚠️ Token expired → Refreshing...")
-        refresh_token()
-        response = session.get(url)
-
-    return response
-
-
 # ==============================
-# GET EXISTING BRANDS
+# CREATE CATEGORY
 # ==============================
 
-def get_existing_brands():
-    response = safe_get(BRAND_API)
-
-    if response.status_code != 200:
-        return []
-
-    return response.json()
-
-
-def brand_exists(name, existing_brands):
-    return any(b["name"].lower() == name.lower() for b in existing_brands)
-
-
-# ==============================
-# CREATE BRAND
-# ==============================
-
-def create_brand(name, logo_url):
+def create_category(name, parent_id=None, image_url=None):
     payload = {
         "name": name,
-        "logoUrl": logo_url
+        "imageUrl": image_url
     }
 
-    response = safe_post(BRAND_API, payload)
+    if parent_id:
+        payload["parentId"] = parent_id
+
+    response = safe_post(CATEGORY_API, payload)
 
     if response.status_code not in [200, 201]:
-        print(f"❌ Failed create brand: {name}")
+        print(f"❌ Failed create category: {name}")
         print(response.text)
         return None
 
-    print(f"✅ Created brand: {name}")
-    return response.json().get("id")
+    category_id = response.json()["id"]
+    print(f"✅ Created: {name}")
+
+    return category_id
+
+
+# ==============================
+# RECURSIVE CREATE
+# ==============================
+
+def create_tree(node, parent_id=None):
+
+    name = node["name"]
+    image_url = node.get("imageUrl")
+    children = node.get("children", [])
+
+    new_id = create_category(name, parent_id, image_url)
+
+    if not new_id:
+        return
+
+    for child in children:
+        create_tree(child, new_id)
+
+    time.sleep(0.05)
 
 
 # ==============================
@@ -120,25 +118,13 @@ def main():
 
     login()
 
-    with open(BRAND_FILE, "r", encoding="utf-8") as f:
-        brands = json.load(f)
+    with open(CATEGORY_FILE, "r", encoding="utf-8") as f:
+        categories = json.load(f)
 
-    existing_brands = get_existing_brands()
+    for root in categories:
+        create_tree(root)
 
-    for brand in brands:
-
-        name = brand["name"]
-        logo = brand.get("logoUrl")
-
-        if brand_exists(name, existing_brands):
-            print(f"⏩ Skip existing brand: {name}")
-            continue
-
-        create_brand(name, logo)
-
-        time.sleep(0.1)
-
-    print("\n🎉 DONE! Brands seeded successfully.")
+    print("\n🎉 DONE! Categories created.")
 
 
 if __name__ == "__main__":

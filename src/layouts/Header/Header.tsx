@@ -185,7 +185,10 @@ export function Header() {
           </Link>
 
           {/* NAVIGATION */}
-          <nav className="hidden lg:flex items-center gap-8 h-full">
+          <nav
+            className="hidden lg:flex items-center gap-8 h-full"
+            onMouseLeave={() => setActiveMega(null)}
+          >
             <Link
               to="/products"
               className="text-[12px] font-bold uppercase tracking-widest text-zinc-600 hover:text-black"
@@ -212,15 +215,21 @@ export function Header() {
                 <AnimatePresence>
                   {activeMega === root.id && root.children.length > 0 && (
                     <motion.div
-                      initial={{ opacity: 0, y: 15 }}
+                      onMouseEnter={() => setActiveMega(root.id)}
+                      initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute top-[80px] left-[-100px] w-[900px] bg-white border shadow-2xl rounded-2xl p-10 z-[60]"
+                      exit={{ opacity: 0, y: 6 }}
+                      transition={{ duration: 0.18 }}
+                      className="fixed left-0 right-0 top-[80px] bg-white border-t border-zinc-100 shadow-xl z-[60]
+             before:content-[''] before:absolute before:w-full before:h-[20px] before:top-[-20px] before:left-0"
                     >
-                      <div className="grid grid-cols-4 gap-8 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
-                        {root.children.map((child) => (
-                          <CategoryNode key={child.id} node={child} />
-                        ))}
+                      {/* Lớp before ở trên đóng vai trò là cây cầu tàng hình nối từ Header xuống Menu */}
+                      <div className="max-w-7xl mx-auto px-10 py-10">
+                        <div className="grid grid-cols-4 gap-10 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
+                          {root.children.map((child) => (
+                            <CategoryNode key={child.id} node={child} />
+                          ))}
+                        </div>
                       </div>
                     </motion.div>
                   )}

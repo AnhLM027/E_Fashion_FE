@@ -12,7 +12,7 @@ REFRESH_URL = f"{BASE_URL}/api/auth/refresh"
 COLOR_API = f"{BASE_URL}/api/admin/colors"
 
 EMAIL = "ad@gmail.com"
-PASSWORD = "123"
+PASSWORD = "123456"
 
 session = requests.Session()
 session.headers.update({

@@ -6,6 +6,7 @@ import categoryReducer from "@/features/categories/slices/categorySlice";
 import cartReducer from "@/features/cart/slices/cartSlice";
 import orderReducer from "@/features/orders/slices/orderSlice";
 import wishlistReducer from "@/features/wishlist/slices/wishlistSlice";
+import ratingReducer from "@/features/ratings/slices/ratingSlice";
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -14,6 +15,7 @@ const rootReducer = combineReducers({
   cart: cartReducer,
   orders: orderReducer,
   wishlist: wishlistReducer,
+  ratings: ratingReducer,
 });
 
 export default rootReducer;
