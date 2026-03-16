@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
 import type { AppDispatch, RootState } from "@/store/store";
@@ -12,6 +12,7 @@ import type { CouponResponseDTO } from "@/features/coupon/types/coupon.type";
 import { couponApi } from "@/features/coupon/api/coupon.api";
 import { Button } from "@/components/ui/Button";
 import { toast } from "sonner";
+import { type CartItem } from "@/features/cart/types/cart.type";
 
 type PaymentMethod = "COD" | "BANKING" | "MOMO" | "VNPAY" | "CREDIT_CARD";
 
@@ -40,7 +41,14 @@ export default function CheckoutPage() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  const { items, totalPrice } = useSelector((state: RootState) => state.cart);
+  const location = useLocation();
+  const selectedItemsFromCart = location.state?.items;
+
+  const { items: cartItems, totalPrice } = useSelector(
+    (state: RootState) => state.cart,
+  );
+
+  const items = selectedItemsFromCart ?? cartItems;
   const { creating } = useSelector((state: RootState) => state.orders);
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
 
@@ -114,7 +122,10 @@ export default function CheckoutPage() {
       currency: "VND",
     }).format(price);
 
-  const subtotal = Number(totalPrice);
+  const subtotal = items.reduce(
+    (sum: number, i: CartItem) => sum + i.price * i.quantity,
+    0,
+  );
   const shippingFee = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
 
   const finalPreview = Math.max(subtotal + shippingFee - discountPreview, 0);
@@ -275,7 +286,7 @@ export default function CheckoutPage() {
       <div className="bg-white p-10 rounded-2xl shadow-md h-fit sticky top-24 space-y-6">
         <h2 className="text-xl font-semibold">Đơn hàng của bạn</h2>
 
-        {items.map((item) => (
+        {items.map((item:CartItem) => (
           <div
             key={item.productVariantSizeId}
             className="flex gap-4 border-b pb-5"

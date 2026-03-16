@@ -51,6 +51,7 @@ export const API_ENDPOINTS = {
       `/api/carts/items/${productVariantSizeId}`,
     REMOVE_ITEM: (productVariantSizeId: string) =>
       `/api/carts/items/${productVariantSizeId}`,
+    CHANGE_VARIANT: "/api/carts/items/change-variant",
   },
   ORDERS: {
     CREATE: '/api/orders',

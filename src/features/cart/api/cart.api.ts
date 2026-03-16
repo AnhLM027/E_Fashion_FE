@@ -25,6 +25,21 @@ export const cartApi = {
     return res;
   },
 
+  async changeVariant(
+    oldVariantSizeId: string,
+    newVariantSizeId: string
+  ): Promise<CartResponse> {
+    const res = await axios.put<CartResponse>(
+      API_ENDPOINTS.CART.CHANGE_VARIANT,
+      {
+        oldVariantSizeId,
+        newVariantSizeId,
+      }
+    );
+
+    return res;
+  },
+
   async removeItem(productVariantSizeId: string) {
     const res = await axios.delete(API_ENDPOINTS.CART.REMOVE_ITEM(productVariantSizeId));
     return res;

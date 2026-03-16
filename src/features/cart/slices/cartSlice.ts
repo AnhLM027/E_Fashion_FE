@@ -70,6 +70,27 @@ export const updateCartItem = createAsyncThunk(
 );
 
 /* =========================
+   CHANGE VARIANT (COLOR / SIZE)
+========================= */
+export const changeCartVariant = createAsyncThunk(
+  "cart/changeVariant",
+  async (
+    {
+      oldVariantSizeId,
+      newVariantSizeId,
+    }: { oldVariantSizeId: string; newVariantSizeId: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      await cartApi.changeVariant(oldVariantSizeId, newVariantSizeId);
+      return await cartApi.getCart();
+    } catch (err: any) {
+      return rejectWithValue(err?.message || "Change variant failed");
+    }
+  }
+);
+
+/* =========================
    REMOVE ITEM
 ========================= */
 export const removeCartItem = createAsyncThunk(
@@ -142,6 +163,22 @@ const cartSlice = createSlice({
         state.updating = false;
       })
 
+      /* CHANGE VARIANT */
+      .addCase(changeCartVariant.pending, state => {
+        state.updating = true;
+      })
+      .addCase(changeCartVariant.fulfilled, (state, action) => {
+        state.updating = false;
+
+        if (!action.payload) return;
+
+        state.items = action.payload.items ?? [];
+        state.totalPrice = action.payload.totalPrice ?? 0;
+      })
+      .addCase(changeCartVariant.rejected, state => {
+        state.updating = false;
+      })
+
       /* REMOVE ITEM */
       .addCase(removeCartItem.pending, state => {
         state.updating = true;
@@ -157,7 +194,7 @@ const cartSlice = createSlice({
       .addCase(removeCartItem.rejected, state => {
         state.updating = false;
       })
-      
+
       .addCase(createOrder.fulfilled, () => initialState);
   },
 });
