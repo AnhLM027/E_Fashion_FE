@@ -154,11 +154,10 @@ export function ProductsFilter() {
                   >
                     <div
                       className={`w-4 h-4 rounded border flex items-center justify-center transition 
-                  ${
-                    active
-                      ? "bg-black border-black"
-                      : "border-gray-300 group-hover:border-black"
-                  }`}
+                  ${active
+                          ? "bg-black border-black"
+                          : "border-gray-300 group-hover:border-black"
+                        }`}
                     >
                       {active && (
                         <div className="w-2 h-2 bg-white rounded-sm"></div>
@@ -175,9 +174,8 @@ export function ProductsFilter() {
                     />
 
                     <span
-                      className={`text-sm transition ${
-                        active ? "font-medium text-black" : "text-gray-600"
-                      }`}
+                      className={`text-sm transition ${active ? "font-medium text-black" : "text-gray-600"
+                        }`}
                     >
                       {name}
                     </span>
@@ -203,11 +201,10 @@ export function ProductsFilter() {
                   key={slug}
                   onClick={() => toggleParam("color", slug, selectedColors)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition
-                ${
-                  active
-                    ? "bg-black text-white border-black"
-                    : "border-gray-300 hover:border-black text-gray-700"
-                }`}
+                ${active
+                      ? "bg-black text-white border-black"
+                      : "border-gray-300 hover:border-black text-gray-700"
+                    }`}
                 >
                   <span
                     className="w-3 h-3 rounded-full border"

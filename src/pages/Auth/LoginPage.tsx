@@ -5,11 +5,19 @@ import { ROUTES } from "../../config/routes";
 import { chatApi } from "@/features/chat/api/chatApi";
 
 const LoginPage = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
   if (isLoading) return null;
-  if (isAuthenticated) return <Navigate to={ROUTES.HOME} replace />;
+  if (isAuthenticated) {
+    const target =
+      user?.role === "ADMIN"
+        ? ROUTES.ADMIN_DASHBOARD
+        : user?.role === "STAFF"
+          ? ROUTES.ADMIN_ORDERS
+          : ROUTES.HOME;
+    return <Navigate to={target} replace />;
+  }
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-gray-50">
@@ -45,7 +53,13 @@ const LoginPage = () => {
                   console.error("Merge guest session failed", err);
                 }
 
-                navigate(ROUTES.HOME, { replace: true });
+                const target =
+                  user?.role === "ADMIN"
+                    ? ROUTES.ADMIN_DASHBOARD
+                    : user?.role === "STAFF"
+                      ? ROUTES.ADMIN_ORDERS
+                      : ROUTES.HOME;
+                navigate(target, { replace: true });
               }}
             />
           </div>

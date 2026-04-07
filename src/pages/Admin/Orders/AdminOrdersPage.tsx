@@ -31,19 +31,10 @@ const paymentColor: Record<string, string> = {
 
 const AdminOrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
 
   const [statusFilter, setStatusFilter] = useState("");
-  const [paymentFilter, setPaymentFilter] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("");
-
-  const [sortField, setSortField] = useState<"createdAt" | "price">(
-    "createdAt",
-  );
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -52,10 +43,8 @@ const AdminOrdersPage = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      setLoading(true);
       const res = await adminOrderApi.getAllOrders();
       setOrders(res);
-      setLoading(false);
     };
     fetch();
   }, []);
@@ -65,7 +54,6 @@ const AdminOrdersPage = () => {
 
     if (search.trim()) {
       const keyword = search.toLowerCase();
-
       data = data.filter(
         (o) =>
           o.orderId.toLowerCase().includes(keyword) ||
@@ -78,20 +66,10 @@ const AdminOrdersPage = () => {
       data = data.filter((o) => o.status === statusFilter);
     }
 
-    if (paymentFilter) {
-      data = data.filter((o) => o.paymentMethod === paymentFilter);
-    }
+
 
     if (paymentStatusFilter) {
       data = data.filter((o) => o.paymentStatus === paymentStatusFilter);
-    }
-
-    if (minPrice) {
-      data = data.filter((o) => o.finalPrice >= Number(minPrice));
-    }
-
-    if (maxPrice) {
-      data = data.filter((o) => o.finalPrice <= Number(maxPrice));
     }
 
     if (fromDate) {
@@ -100,297 +78,127 @@ const AdminOrdersPage = () => {
     }
 
     if (toDate) {
-      const to = new Date(toDate);
-      to.setHours(23, 59, 59, 999);
-
-      data = data.filter(
-        (o) => new Date(o.createdAt).getTime() <= to.getTime(),
-      );
+      const to = new Date(toDate).getTime();
+      data = data.filter((o) => new Date(o.createdAt).getTime() <= to);
     }
-
-    // SORT
-    data.sort((a, b) => {
-      let valueA;
-      let valueB;
-
-      if (sortField === "price") {
-        valueA = a.finalPrice;
-        valueB = b.finalPrice;
-      } else {
-        valueA = new Date(a.createdAt).getTime();
-        valueB = new Date(b.createdAt).getTime();
-      }
-
-      if (sortOrder === "asc") {
-        return valueA - valueB;
-      }
-
-      return valueB - valueA;
-    });
 
     return data;
-  }, [
-    orders,
-    search,
-    statusFilter,
-    paymentFilter,
-    paymentStatusFilter,
-    minPrice,
-    maxPrice,
-    fromDate,
-    toDate,
-    sortField,
-    sortOrder,
-  ]);
-
-  const handleExport = async () => {
-    const params = new URLSearchParams();
-
-    if (fromDate) params.append("from", fromDate);
-    if (toDate) params.append("to", toDate);
-
-    const response = await adminOrderApi.exportOrders(params.toString());
-
-    const blob = new Blob([response], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-
-    // 🔥 TỰ ĐỘNG ĐẶT TÊN FILE
-    const today = new Date().toISOString().split("T")[0];
-
-    let fileName = "orders";
-
-    if (fromDate && toDate) {
-      fileName = `orders_${fromDate}_to_${toDate}`;
-    } else if (fromDate) {
-      fileName = `orders_from_${fromDate}`;
-    } else if (toDate) {
-      fileName = `orders_to_${toDate}`;
-    } else {
-      fileName = `orders_${today}`;
-    }
-
-    link.download = `${fileName}.csv`;
-
-    link.click();
-  };
+  }, [orders, search, statusFilter, paymentStatusFilter, fromDate, toDate]);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       {/* HEADER */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Orders Management</h1>
-
-        <button
-          onClick={handleExport}
-          className="bg-black text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition"
-        >
-          Export CSV
-        </button>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900">Order Management</h1>
+          <p className="text-sm text-zinc-500">Manage customer orders and fulfillment</p>
+        </div>
       </div>
 
-      {/* SEARCH */}
-      <div className="flex justify-between items-center">
-        <div className="relative w-80">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-
+      {/* FILTERS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="relative col-span-1 md:col-span-2 lg:col-span-1">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search order / customer..."
-            className="w-full pl-9 pr-9 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-black"
+            placeholder="Search Order ID, Name..."
+            className="w-full pl-9 pr-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900 transition-all font-medium"
           />
+        </div>
 
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2"
-            >
-              <X size={16} />
-            </button>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:bg-white transition-all font-medium cursor-pointer"
+        >
+          <option value="">All Statuses</option>
+          {Object.keys(statusColor).map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+
+        <select
+          value={paymentStatusFilter}
+          onChange={(e) => setPaymentStatusFilter(e.target.value)}
+          className="bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:bg-white transition-all font-medium cursor-pointer"
+        >
+          <option value="">Payment Status</option>
+          <option value="PAID">PAID</option>
+          <option value="UNPAID">UNPAID</option>
+        </select>
+
+        <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1">
+           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Date Range</span>
+           <div className="flex items-center gap-1">
+              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="bg-transparent text-[11px] border-none p-0 focus:ring-0" />
+              <span className="text-zinc-300">-</span>
+              <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="bg-transparent text-[11px] border-none p-0 focus:ring-0" />
+           </div>
+           {(fromDate || toDate) && <button onClick={() => { setFromDate(""); setToDate(""); }} className="text-zinc-400 hover:text-zinc-900"><X size={14}/></button>}
+        </div>
+      </div>
+
+      {/* TABLE */}
+      <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-zinc-50 border-b border-zinc-200">
+                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Order ID</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Customer</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Total</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Payment</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+              {filteredOrders.map((o) => (
+                <tr
+                  key={o.orderId}
+                  onClick={() => navigate(`/admin/orders/${o.orderId}`)}
+                  className="hover:bg-zinc-50 cursor-pointer transition-colors group"
+                >
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-bold text-zinc-900 group-hover:text-zinc-600 transition-colors">#{o.orderId.substring(0, 8)}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-zinc-900">{o.userFullName}</span>
+                      <span className="text-[11px] text-zinc-500 font-medium">{o.userEmail}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-bold text-zinc-900 font-mono">{o.finalPrice.toLocaleString()}₫</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${statusColor[o.status]}`}>
+                      {o.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${paymentColor[o.paymentStatus]}`}>
+                      {o.paymentStatus}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <span className="text-[11px] font-bold text-zinc-400">
+                      {new Date(o.createdAt).toLocaleDateString("vi-VN", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric"
+                      })}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {filteredOrders.length === 0 && (
+            <div className="py-20 text-center text-zinc-400 italic">No orders found matching your filters</div>
           )}
         </div>
-      </div>
-
-      {/* FILTER CARD */}
-      <div className="bg-white border rounded-xl p-4 shadow-sm">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {/* DATE */}
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="border px-3 py-2 rounded-lg text-sm"
-          />
-
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="border px-3 py-2 rounded-lg text-sm"
-          />
-
-          {/* STATUS */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="border px-3 py-2 rounded-lg text-sm"
-          >
-            <option value="">All Status</option>
-            <option value="PENDING">Pending</option>
-            <option value="PROCESSING">Processing</option>
-            <option value="SHIPPED">Shipped</option>
-            <option value="DELIVERED">Delivered</option>
-            <option value="CANCELLED">Cancelled</option>
-            <option value="RETURNED">Returned</option>
-          </select>
-
-          {/* PAYMENT METHOD */}
-          <select
-            value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value)}
-            className="border px-3 py-2 rounded-lg text-sm"
-          >
-            <option value="">Payment</option>
-            <option value="COD">COD</option>
-            <option value="BANKING">Banking</option>
-            <option value="MOMO">MoMo</option>
-            <option value="VNPAY">VNPay</option>
-          </select>
-
-          {/* PAYMENT STATUS */}
-          <select
-            value={paymentStatusFilter}
-            onChange={(e) => setPaymentStatusFilter(e.target.value)}
-            className="border px-3 py-2 rounded-lg text-sm"
-          >
-            <option value="">Payment Status</option>
-            <option value="PAID">Paid</option>
-            <option value="UNPAID">Unpaid</option>
-          </select>
-
-          {/* SORT FIELD */}
-          <select
-            value={sortField}
-            onChange={(e) =>
-              setSortField(e.target.value as "createdAt" | "price")
-            }
-            className="border px-3 py-2 rounded-lg text-sm"
-          >
-            <option value="createdAt">Sort by Date</option>
-            <option value="price">Sort by Price</option>
-          </select>
-
-          {/* SORT ORDER */}
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-            className="border px-3 py-2 rounded-lg text-sm"
-          >
-            <option value="desc">Descending</option>
-            <option value="asc">Ascending</option>
-          </select>
-
-          {/* PRICE */}
-          <input
-            type="number"
-            placeholder="Min price"
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
-            className="border px-3 py-2 rounded-lg text-sm"
-          />
-
-          <input
-            type="number"
-            placeholder="Max price"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-            className="border px-3 py-2 rounded-lg text-sm"
-          />
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 border-b text-xs uppercase text-gray-500">
-            <tr>
-              <th className="px-6 py-3 text-left">Order</th>
-              <th className="px-6 py-3 text-left">Customer</th>
-              <th className="px-6 py-3 text-left">Receiver</th>
-              <th className="px-6 py-3 text-left">Total</th>
-              <th className="px-6 py-3 text-left">Payment</th>
-              <th className="px-6 py-3 text-left">Status</th>
-              <th className="px-6 py-3 text-left"></th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredOrders.map((order) => (
-              <tr
-                key={order.orderId}
-                className="border-b hover:bg-gray-50 transition"
-              >
-                <td className="px-6 py-4 font-medium">
-                  #{order.orderId.slice(0, 8)}
-                  <div className="text-xs text-gray-400">
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </div>
-                </td>
-
-                <td className="px-6 py-4">
-                  <div className="font-medium">{order.userFullName}</div>
-                  <div className="text-xs text-gray-400">{order.userEmail}</div>
-                </td>
-
-                <td className="px-6 py-4">{order.receiverName}</td>
-
-                <td className="px-6 py-4 font-semibold">
-                  {order.finalPrice?.toLocaleString()}₫
-                </td>
-
-                <td className="px-6 py-4">
-                  <div className="text-xs">{order.paymentMethod}</div>
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${paymentColor[order.paymentStatus]}`}
-                  >
-                    {order.paymentStatus}
-                  </span>
-                </td>
-
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor[order.status]}`}
-                  >
-                    {order.status}
-                  </span>
-                </td>
-
-                <td className="px-6 py-4">
-                  <button
-                    onClick={() => navigate(`/admin/orders/${order.orderId}`)}
-                    className="text-blue-600 text-sm hover:underline"
-                  >
-                    View Detail
-                  </button>
-                </td>
-              </tr>
-            ))}
-
-            {filteredOrders.length === 0 && (
-              <tr>
-                <td colSpan={7} className="text-center py-8 text-gray-400">
-                  Không tìm thấy đơn hàng
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
       </div>
     </div>
   );

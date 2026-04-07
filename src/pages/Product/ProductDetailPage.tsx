@@ -23,6 +23,8 @@ import {
   ratingApi,
 } from "@/features/ratings/api/ratingApi";
 import { formatProductDescription } from "@/utils/format";
+import { cn } from "@/lib/utils";
+import { ROUTES } from "@/config/routes";
 
 // Logic sizeMap giữ nguyên
 const sizeMap = [
@@ -426,13 +428,13 @@ export default function ProductDetailPage() {
       {/* BREADCRUMB */}
       <nav className="border-b border-zinc-100">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-2 text-[11px] font-medium tracking-widest text-zinc-400">
-          <Link to="/" className="hover:text-black transition">
+          <Link to={ROUTES.HOME} className="hover:text-black transition">
             Trang chủ
           </Link>
 
           <ChevronRight size={10} strokeWidth={3} className="text-zinc-300" />
 
-          <Link to="/products" className="hover:text-black transition">
+          <Link to={ROUTES.PRODUCTS} className="hover:text-black transition">
             Cửa hàng
           </Link>
 
@@ -445,7 +447,7 @@ export default function ProductDetailPage() {
               />
 
               <Link
-                to={`/products/category/${product.categorySlug}`}
+                to={ROUTES.productsByCategory(product.categorySlug)}
                 className="hover:text-black transition"
               >
                 {categoryDisplayName}
@@ -601,11 +603,10 @@ export default function ProductDetailPage() {
                       onClick={() => handleSelectVariant(variant)}
                       disabled={isOutOfStock}
                       className={`relative h-16 w-16 overflow-hidden rounded-lg border transition
-            ${
-              isActive
-                ? "border-black ring-1 ring-black"
-                : "border-neutral-300 hover:border-black"
-            }
+            ${isActive
+                          ? "border-black ring-1 ring-black"
+                          : "border-neutral-300 hover:border-black"
+                        }
             ${isOutOfStock ? "opacity-40 cursor-not-allowed" : ""}`}
                     >
                       <img
@@ -648,11 +649,10 @@ export default function ProductDetailPage() {
                     disabled={size.availableStock === 0}
                     onClick={() => handleSelectSize(size)}
                     className={`h-11 w-14 text-sm border rounded-md transition
-          ${
-            selectedSize?.id === size.id
-              ? "border-black bg-black text-white"
-              : "border-neutral-300 hover:border-black"
-          }
+          ${selectedSize?.id === size.id
+                        ? "border-black bg-black text-white"
+                        : "border-neutral-300 hover:border-black"
+                      }
           ${size.availableStock === 0 && "opacity-30 cursor-not-allowed"}`}
                   >
                     {size.sizeName}
@@ -735,17 +735,15 @@ export default function ProductDetailPage() {
                 onClick={() => handleToggleWishlist(product.id)}
                 disabled={wishlistLoading}
                 className={`h-14 w-14 flex items-center justify-center border rounded-md transition
-      ${
-        isWishlisted
-          ? "bg-black text-white border-black"
-          : "border-neutral-300 hover:border-black"
-      }
+      ${isWishlisted
+                    ? "bg-black text-white border-black"
+                    : "border-neutral-300 hover:border-black"
+                  }
       ${wishlistLoading ? "opacity-60 cursor-not-allowed" : ""}`}
               >
                 <Heart
-                  className={`h-5 w-5 ${
-                    isWishlisted ? "fill-current" : ""
-                  } ${wishlistLoading ? "animate-pulse" : ""}`}
+                  className={`h-5 w-5 ${isWishlisted ? "fill-current" : ""
+                    } ${wishlistLoading ? "animate-pulse" : ""}`}
                 />
               </button>
             </div>
@@ -758,11 +756,10 @@ export default function ProductDetailPage() {
             <button
               onClick={() => setTab("description")}
               className={`px-6 py-3 text-sm font-medium transition
-      ${
-        tab === "description"
-          ? "border-b-2 border-black text-black"
-          : "text-neutral-500 hover:text-black"
-      }`}
+      ${tab === "description"
+                  ? "border-b-2 border-black text-black"
+                  : "text-neutral-500 hover:text-black"
+                }`}
             >
               Mô tả sản phẩm
             </button>
@@ -770,11 +767,10 @@ export default function ProductDetailPage() {
             <button
               onClick={() => setTab("policy")}
               className={`px-6 py-3 text-sm font-medium transition
-      ${
-        tab === "policy"
-          ? "border-b-2 border-black text-black"
-          : "text-neutral-500 hover:text-black"
-      }`}
+      ${tab === "policy"
+                  ? "border-b-2 border-black text-black"
+                  : "text-neutral-500 hover:text-black"
+                }`}
             >
               Chính sách đổi & trả
             </button>
@@ -782,11 +778,10 @@ export default function ProductDetailPage() {
             <button
               onClick={() => setTab("ratings")}
               className={`px-6 py-3 text-sm font-medium transition
-      ${
-        tab === "ratings"
-          ? "border-b-2 border-black text-black"
-          : "text-neutral-500 hover:text-black"
-      }`}
+      ${tab === "ratings"
+                  ? "border-b-2 border-black text-black"
+                  : "text-neutral-500 hover:text-black"
+                }`}
             >
               Đánh giá
             </button>
@@ -933,22 +928,20 @@ export default function ProductDetailPage() {
               <div className="flex gap-6 border-b mb-6">
                 <button
                   onClick={() => setActiveSizeTab("guide")}
-                  className={`pb-2 text-sm font-medium ${
-                    activeSizeTab === "guide"
+                  className={`pb-2 text-sm font-medium ${activeSizeTab === "guide"
                       ? "border-b-2 border-black text-black"
                       : "text-gray-400"
-                  }`}
+                    }`}
                 >
                   Hướng dẫn chọn size
                 </button>
 
                 <button
                   onClick={() => setActiveSizeTab("table")}
-                  className={`pb-2 text-sm font-medium ${
-                    activeSizeTab === "table"
+                  className={`pb-2 text-sm font-medium ${activeSizeTab === "table"
                       ? "border-b-2 border-black text-black"
                       : "text-gray-400"
-                  }`}
+                    }`}
                 >
                   Bảng size
                 </button>

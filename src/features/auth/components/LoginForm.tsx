@@ -43,7 +43,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       try {
         await login(email, password);
         onSuccess?.();
-      } catch {}
+      } catch { }
     },
     [email, password, login, validateForm, clearError, onSuccess],
   );
@@ -69,11 +69,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           placeholder="example@email.com"
           className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm transition
           focus:outline-none focus:ring-2
-          ${
-            validationErrors.email
+          ${validationErrors.email
               ? "border-red-500 focus:ring-red-500"
               : "border-gray-300 focus:ring-black"
-          }`}
+            }`}
         />
         {validationErrors.email && (
           <p className="mt-1 text-xs text-red-500">{validationErrors.email}</p>
@@ -99,11 +98,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           placeholder="••••••••"
           className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm transition
           focus:outline-none focus:ring-2
-          ${
-            validationErrors.password
+          ${validationErrors.password
               ? "border-red-500 focus:ring-red-500"
               : "border-gray-300 focus:ring-black"
-          }`}
+            }`}
         />
         {validationErrors.password && (
           <p className="mt-1 text-xs text-red-500">

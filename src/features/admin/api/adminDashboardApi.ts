@@ -1,4 +1,5 @@
 import axiosClient from "@/lib/axiosClient";
+import { API_ENDPOINTS } from "@/config/api.config";
 import type { DashboardResponseDTO } from "../types/dashboard.type";
 
 interface DateFilter {
@@ -10,14 +11,14 @@ export const adminDashboardApi = {
   getDashboard: async (
     params?: DateFilter
   ): Promise<DashboardResponseDTO> => {
-    return axiosClient.get("/api/admin/dashboard", {
+    return axiosClient.get(API_ENDPOINTS.ADMIN.DASHBOARD, {
       params,
     });
   },
 
   exportRevenue: async (params?: DateFilter) => {
     return axiosClient.get(
-      "/api/admin/dashboard/export/revenue",
+      API_ENDPOINTS.ADMIN.EXPORT_DASHBOARD("revenue"),
       {
         params,
         responseType: "blob",
@@ -27,7 +28,7 @@ export const adminDashboardApi = {
 
   exportRecentOrders: async (params?: DateFilter) => {
     return axiosClient.get(
-      "/api/admin/dashboard/export/recent-orders",
+      API_ENDPOINTS.ADMIN.EXPORT_DASHBOARD("recent-orders"),
       {
         params,
         responseType: "blob",
@@ -37,7 +38,7 @@ export const adminDashboardApi = {
 
   exportTopProducts: async (params?: DateFilter) => {
     return axiosClient.get(
-      "/api/admin/dashboard/export/top-products",
+      API_ENDPOINTS.ADMIN.EXPORT_DASHBOARD("top-products"),
       {
         params,
         responseType: "blob",
@@ -47,7 +48,7 @@ export const adminDashboardApi = {
 
   exportLowStock: async () => {
     return axiosClient.get(
-      "/api/admin/dashboard/export/low-stock",
+      API_ENDPOINTS.ADMIN.EXPORT_DASHBOARD("low-stock"),
       {
         responseType: "blob",
       }
@@ -56,7 +57,7 @@ export const adminDashboardApi = {
 
   exportFullDashboard: async () => {
     return axiosClient.get(
-      "/api/admin/dashboard/export/full",
+      API_ENDPOINTS.ADMIN.EXPORT_DASHBOARD("full"),
       { responseType: "blob" }
     );
   },

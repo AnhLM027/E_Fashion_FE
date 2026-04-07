@@ -65,7 +65,7 @@ export const RegisterForm: React.FC<Props> = ({ onSuccess }) => {
       });
 
       onSuccess?.(); // báo thành công cho RegisterPage
-    } catch {}
+    } catch { }
   };
 
   return (
@@ -88,11 +88,10 @@ export const RegisterForm: React.FC<Props> = ({ onSuccess }) => {
           placeholder="example@email.com"
           className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm transition
           focus:outline-none focus:ring-2
-          ${
-            validationErrors.email
+          ${validationErrors.email
               ? "border-red-500 focus:ring-red-500"
               : "border-gray-300 focus:ring-black"
-          }`}
+            }`}
         />
 
         {validationErrors.email && (
@@ -112,11 +111,10 @@ export const RegisterForm: React.FC<Props> = ({ onSuccess }) => {
           placeholder="••••••••"
           className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm transition
           focus:outline-none focus:ring-2
-          ${
-            validationErrors.password
+          ${validationErrors.password
               ? "border-red-500 focus:ring-red-500"
               : "border-gray-300 focus:ring-black"
-          }`}
+            }`}
         />
 
         {validationErrors.password && (
@@ -138,11 +136,10 @@ export const RegisterForm: React.FC<Props> = ({ onSuccess }) => {
           placeholder="••••••••"
           className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm transition
           focus:outline-none focus:ring-2
-          ${
-            validationErrors.confirmPassword
+          ${validationErrors.confirmPassword
               ? "border-red-500 focus:ring-red-500"
               : "border-gray-300 focus:ring-black"
-          }`}
+            }`}
         />
 
         {validationErrors.confirmPassword && (

@@ -1,12 +1,13 @@
 import axiosClient from "@/lib/axiosClient";
+import { API_ENDPOINTS } from "@/config/api.config";
 
 export const adminAttributeApi = {
   create: (productId: string, data: any) =>
-    axiosClient.post(`/api/admin/products/${productId}/attributes`, data),
+    axiosClient.post(API_ENDPOINTS.STAFF.PRODUCT_ATTRIBUTES(productId), data),
 
   getByProduct: (productId: string) =>
-    axiosClient.get(`/api/admin/products/${productId}/attributes`),
+    axiosClient.get(API_ENDPOINTS.STAFF.PRODUCT_ATTRIBUTES(productId)),
 
   delete: (productId: string, id: string) =>
-    axiosClient.delete(`/api/admin/products/${productId}/attributes/${id}`),
+    axiosClient.delete(`${API_ENDPOINTS.STAFF.PRODUCT_ATTRIBUTES(productId)}/${id}`),
 };

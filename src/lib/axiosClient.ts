@@ -12,6 +12,21 @@ const instance: AxiosInstance = axios.create({
   withCredentials: true,
 });
 
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
 // interceptor
 instance.interceptors.response.use(
   (response) => response.data,
@@ -33,19 +48,40 @@ instance.interceptors.response.use(
 
     // 👉 Access token hết hạn -> thử refresh
     if (is401 && !originalRequest._retry && !isRefreshRequest) {
-      originalRequest._retry = true;
-
-      try {
-        console.log("🔄 Calling refresh token...");
-        await instance.post("/api/auth/refresh");
-
-        console.log("✅ Refresh success, retry request");
-        return instance(originalRequest);
-      } catch (refreshError) {
-        console.log("❌ Refresh failed -> session expired");
-        window.dispatchEvent(new Event("SESSION_EXPIRED"));
-        return Promise.reject(refreshError);
+      if (isRefreshing) {
+        return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => {
+            return instance(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
       }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      return new Promise(function (resolve, reject) {
+        console.log("🔄 Calling refresh token...");
+        instance
+          .post("/api/auth/refresh")
+          .then(() => {
+            console.log("✅ Refresh success, retrying pending requests...");
+            processQueue(null);
+            resolve(instance(originalRequest));
+          })
+          .catch((refreshError) => {
+            console.log("❌ Refresh failed -> session expired");
+            processQueue(refreshError, null);
+            window.dispatchEvent(new Event("SESSION_EXPIRED"));
+            reject(refreshError);
+          })
+          .finally(() => {
+            isRefreshing = false;
+          });
+      });
     }
 
     return Promise.reject(error);

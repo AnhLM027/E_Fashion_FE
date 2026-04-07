@@ -1,14 +1,15 @@
 import axiosClient from "@/lib/axiosClient";
+import { API_ENDPOINTS } from "@/config/api.config";
 
 export const adminBrandApi = {
-  getAll: () => axiosClient.get("/api/admin/brands"),
+  getAll: () => axiosClient.get(API_ENDPOINTS.STAFF.BRANDS),
 
   create: (data: any) =>
-    axiosClient.post("/api/admin/brands", data),
+    axiosClient.post(API_ENDPOINTS.ADMIN.BRANDS, data),
   
   update: (id: string, data: any) =>
-    axiosClient.put(`/api/admin/brands/${id}`, data),
+    axiosClient.put(API_ENDPOINTS.ADMIN.BRAND_ID(id), data),
   
   delete: (id: string) =>
-    axiosClient.delete(`/api/admin/brands/${id}`),
+    axiosClient.delete(API_ENDPOINTS.ADMIN.BRAND_ID(id)),
 };

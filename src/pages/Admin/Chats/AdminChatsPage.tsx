@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from "react";
-import { Paperclip, Upload, Image, Search } from "lucide-react";
+import { Image, Search } from "lucide-react";
 import {
   connectChat,
   subscribeSession,
@@ -35,7 +35,6 @@ export default function AdminChatsPage() {
 
   const [uploading, setUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -53,7 +52,6 @@ export default function AdminChatsPage() {
 
   const loadSessions = async () => {
     const res = await adminChatApi.getActiveSessions();
-    // console.log("SESSIONS:", res);
     setSessions(res);
   };
 
@@ -71,12 +69,10 @@ export default function AdminChatsPage() {
   /* ================= SOCKET ================= */
 
   useEffect(() => {
-    const client = connectChat((connectedClient) => {
-      // console.log("SOCKET CONNECTED");
+    connectChat((connectedClient) => {
       clientRef.current = connectedClient;
 
       adminSubRef.current = subscribeAdminMessages((msg) => {
-        // 🔥 reload sessions từ DB để lấy unreadCount chuẩn
         loadSessions();
 
         if (selectedSession?.id === msg.sessionId) {
@@ -84,14 +80,9 @@ export default function AdminChatsPage() {
         }
       });
 
-      // subscribeAdminMessages((msg) => {
-      //   console.log("ADMIN RECEIVED:", msg);
-      // });
-
       adminSessionUpdateSub.current = subscribeAdminSessionUpdate(
         async (updatedSession) => {
           setSessions((prev) => {
-            // 🔥 Nếu session bị CLOSED → remove khỏi list
             if (updatedSession.status === "CLOSED") {
               return prev.filter((s) => s.id !== updatedSession.id);
             }
@@ -109,7 +100,6 @@ export default function AdminChatsPage() {
           if (selectedSessionRef.current?.id === updatedSession.id) {
             await loadMessages(updatedSession.id);
           }
-          // 🔥 Nếu đang mở session đó mà nó bị CLOSED
           if (
             selectedSession?.id === updatedSession.id &&
             updatedSession.status === "CLOSED"
@@ -174,13 +164,8 @@ export default function AdminChatsPage() {
 
   const handleSelectSession = async (session: AdminChatSession) => {
     setSelectedSession(session);
-
-    // 🔥 mark as read trên backend
     await adminChatApi.markAsRead(session.id);
-
-    // reload sessions để unreadCount = 0
     await loadSessions();
-
     await loadMessages(session.id);
 
     sessionSubRef.current?.unsubscribe();
@@ -242,21 +227,6 @@ export default function AdminChatsPage() {
     }
   };
 
-  const sortedSessions = useMemo(() => {
-    return [...sessions].sort((a, b) => {
-      if (b.unreadCount !== a.unreadCount) {
-        return b.unreadCount - a.unreadCount;
-      }
-
-      const timeA = new Date(a.lastTime ?? a.createdAt).getTime();
-      const timeB = new Date(b.lastTime ?? b.createdAt).getTime();
-
-      // console.log("Time: ", a.lastTime, b.lastTime)
-
-      return timeB - timeA;
-    });
-  }, [sessions]);
-
   const scrollToBottom = (smooth = true) => {
     if (!messagesContainerRef.current) return;
 
@@ -283,7 +253,6 @@ export default function AdminChatsPage() {
           if (!file) continue;
 
           const previewUrl = URL.createObjectURL(file);
-
           setPreviewImage(previewUrl);
           setSelectedFile(file);
         }
@@ -300,12 +269,11 @@ export default function AdminChatsPage() {
     const file = e.target.files[0];
 
     if (!file.type.startsWith("image/")) {
-      alert("Chỉ cho phép file ảnh");
+      alert("Only images allowed");
       return;
     }
 
     const previewUrl = URL.createObjectURL(file);
-
     setPreviewImage(previewUrl);
     setSelectedFile(file);
   };
@@ -315,11 +283,8 @@ export default function AdminChatsPage() {
 
     try {
       setUploading(true);
-
-      // ✅ chỉ truyền File
       let imageUrl = await adminChatApi.uploadFile(selectedFile);
 
-      // Nếu BE trả về path bắt đầu bằng "/uploads/..."
       if (imageUrl.startsWith("/")) {
         imageUrl = `${import.meta.env.VITE_API_URL || ""}${imageUrl}`;
       }
@@ -331,7 +296,6 @@ export default function AdminChatsPage() {
         content: imageUrl,
       });
 
-      // Reset state
       setPreviewImage(null);
       setSelectedFile(null);
 
@@ -340,7 +304,7 @@ export default function AdminChatsPage() {
       }
     } catch (err) {
       console.error("Upload failed", err);
-      alert("Upload thất bại");
+      alert("Upload failed");
     } finally {
       setUploading(false);
     }
@@ -368,36 +332,29 @@ export default function AdminChatsPage() {
   const handleCloseSession = async () => {
     if (!selectedSession) return;
 
-    const confirmClose = confirm("Bạn có chắc muốn đóng cuộc trò chuyện này?");
+    const confirmClose = confirm("Are you sure you want to close this conversation?");
     if (!confirmClose) return;
 
     try {
       await adminChatApi.closeSession(selectedSession.id);
-
       sessionSubRef.current?.unsubscribe();
       setSelectedSession(null);
       setMessages([]);
-
       await loadSessions();
     } catch (err) {
       console.error("Close session failed", err);
-      alert("Đóng cuộc trò chuyện thất bại");
+      alert("Failed to close conversation");
     }
   };
 
   const renderSessionPreview = (session: AdminChatSession) => {
-    if (!session.lastMessage) return "Người dùng mới được kết nối";
+    if (!session.lastMessage) return "New session started";
 
     switch (session.lastMessageType) {
       case "IMAGE":
-        return "📷 Hình ảnh";
-
+        return "📷 Image attachment";
       case "PRODUCT":
-        return "🛍️ Sản phẩm";
-
-      case "SYSTEM":
-        return session.lastMessage;
-
+        return "🛍️ Product reference";
       default:
         return session.lastMessage;
     }
@@ -417,7 +374,6 @@ export default function AdminChatsPage() {
 
     if (searchSession.trim()) {
       const keyword = searchSession.toLowerCase();
-
       data = data.filter(
         (s) =>
           s.fullName?.toLowerCase().includes(keyword) ||
@@ -429,103 +385,81 @@ export default function AdminChatsPage() {
       if (b.unreadCount !== a.unreadCount) {
         return b.unreadCount - a.unreadCount;
       }
-
       const timeA = new Date(a.lastTime ?? a.createdAt).getTime();
       const timeB = new Date(b.lastTime ?? b.createdAt).getTime();
-
       return timeB - timeA;
     });
   }, [sessions, searchSession]);
 
   return (
-    <div className="flex h-145 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl overflow-hidden shadow-2xl">
+    <div className="flex h-[calc(100vh-140px)] bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm animate-in fade-in duration-500">
       {/* ================= LEFT SIDEBAR ================= */}
-      <div className="w-[380px] bg-white/80 backdrop-blur-xl border-r flex flex-col">
+      <div className="w-[320px] bg-zinc-50 border-r border-zinc-200 flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b bg-white/60 backdrop-blur">
-          <h2 className="text-xl font-semibold">Conversations</h2>
-          <p className="text-xs text-gray-400 mt-1">
-            {sessions.length} active chats
+        <div className="p-4 border-b border-zinc-200 bg-white">
+          <h2 className="text-lg font-bold text-zinc-900 leading-none">Chats</h2>
+          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1.5 leading-none">
+            {sessions.length} ACTIVE SESSIONS
           </p>
         </div>
 
-        <div className="px-4 pb-4 pt-6">
+        <div className="p-3">
           <div className="relative">
             <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
             />
-
             <input
               value={searchSession}
               onChange={(e) => setSearchSession(e.target.value)}
-              placeholder="Search name or email..."
-              className="w-full pl-9 pr-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-black"
+              placeholder="Search conversations..."
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 transition-all font-medium"
             />
           </div>
         </div>
 
         {/* Session List */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-2">
+        <div className="flex-1 overflow-y-auto px-2 py-1 space-y-1">
           {filteredSessions.map((session) => {
             const isActive = selectedSession?.id === session.id;
-            const displayName =
-              session.fullName?.trim() ||
-              session.email?.trim() ||
-              "Tin nhắn ẩn danh";
+            const displayName = session.fullName?.trim() || session.email?.trim() || "User";
             const avatarLetter = displayName.charAt(0).toUpperCase();
 
             return (
               <div
                 key={session.id}
                 onClick={() => handleSelectSession(session)}
-                className={`flex items-center gap-3 p-4 rounded-2xl cursor-pointer transition-all duration-200
+                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200
               ${
                 isActive
-                  ? "bg-black text-white shadow-lg scale-[1.02]"
-                  : "hover:bg-gray-100"
+                  ? "bg-zinc-900 text-white shadow-sm"
+                  : "hover:bg-zinc-100"
               }`}
               >
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold
-                ${isActive ? "bg-white text-black" : "bg-black text-white"}`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0
+                ${isActive ? "bg-white text-zinc-900" : "bg-zinc-200 text-zinc-600"}`}
                 >
                   {avatarLetter}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center mb-0.5">
                     <div
-                      className={`text-sm truncate ${
-                        session.unreadCount > 0
-                          ? "font-semibold"
-                          : "font-medium"
+                      className={`text-[13px] truncate ${
+                        session.unreadCount > 0 ? "font-bold" : "font-semibold"
                       }`}
                     >
                       {displayName}
                     </div>
-                    <div
-                      className={`text-xs ${
-                        isActive ? "text-white/70" : "text-gray-400"
-                      }`}
-                    >
-                      {formatDateLabel(session.lastTime ?? "")}
+                    <div className="text-[10px] font-bold text-zinc-400 flex shrink-0 ml-2">
+                      {formatTime(session.lastTime ?? session.createdAt)}
                     </div>
                   </div>
 
-                  {session.email && (
-                    <div
-                      className={`text-xs truncate ${
-                        isActive ? "text-white/70" : "text-gray-400"
-                      }`}
-                    >
-                      {session.email}
-                    </div>
-                  )}
-
                   <div
-                    className={`text-sm truncate mt-1 ${
-                      isActive ? "text-white/80" : "text-gray-500"
+                    className={`text-[11px] truncate ${
+                      isActive ? "text-zinc-400" : "text-zinc-500"
                     }`}
                   >
                     {renderSessionPreview(session)}
@@ -533,13 +467,8 @@ export default function AdminChatsPage() {
                 </div>
 
                 {session.unreadCount > 0 && !isActive && (
-                  <div className="bg-black text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">
+                  <div className="bg-zinc-900 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold shrink-0 border border-white">
                     {session.unreadCount}
-                  </div>
-                )}
-
-                {!session.lastMessage && !isActive && (
-                  <div className="bg-blue-800 text-white text-xs w-2.5 h-2.5 rounded-full flex items-center justify-center">
                   </div>
                 )}
               </div>
@@ -553,23 +482,28 @@ export default function AdminChatsPage() {
         {selectedSession ? (
           <>
             {/* ===== CHAT HEADER ===== */}
-            <div className="px-8 py-5 border-b flex items-center justify-between bg-white">
-              <div>
-                <div className="text-lg font-semibold">
-                  {selectedSession.fullName || "Tin nhắn ẩn danh"}
+            <div className="px-6 py-4 border-b border-zinc-200 flex items-center justify-between bg-white z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-bold text-zinc-600 border border-zinc-200">
+                  {(selectedSession.fullName || "U").charAt(0).toUpperCase()}
                 </div>
-                {selectedSession.email && (
-                  <div className="text-xs text-gray-400">
-                    {selectedSession.email}
+                <div>
+                  <div className="text-sm font-bold text-zinc-900 leading-none">
+                    {selectedSession.fullName || "Anonymous User"}
                   </div>
-                )}
+                  {selectedSession.email && (
+                    <div className="text-[10px] font-bold text-zinc-400 mt-1 uppercase tracking-wider">
+                      {selectedSession.email}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <button
                 onClick={handleCloseSession}
-                className="text-xs px-4 py-2 rounded-full border border-red-400 text-red-500 hover:bg-red-50 transition"
+                className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg border border-zinc-200 text-zinc-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all"
               >
-                Close
+                Close Session
               </button>
             </div>
 
@@ -578,49 +512,32 @@ export default function AdminChatsPage() {
               ref={messagesContainerRef}
               onClick={handleMarkAsSeen}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto px-10 py-8 space-y-6 bg-gradient-to-b from-gray-50 to-white"
+              className="flex-1 overflow-y-auto px-6 py-8 space-y-6 bg-zinc-50/30"
             >
               {messages.map((msg, index) => {
                 const isAgent = msg.senderType === "AGENT";
-
                 const currentDate = new Date(msg.createdAt).toDateString();
-                const prevDate =
-                  index > 0
-                    ? new Date(messages[index - 1].createdAt).toDateString()
-                    : null;
-
+                const prevDate = index > 0 ? new Date(messages[index - 1].createdAt).toDateString() : null;
                 const showDateSeparator = currentDate !== prevDate;
 
                 return (
                   <div key={msg.id}>
-                    {/* ===== DATE SEPARATOR ===== */}
                     {showDateSeparator && (
-                      <div className="flex justify-center my-6">
-                        <div className="px-4 py-1 text-xs text-gray-500 bg-gray-200 rounded-full">
+                      <div className="flex justify-center my-8">
+                        <div className="px-3 py-1 text-[10px] font-bold text-zinc-400 uppercase tracking-widest bg-zinc-100 rounded-md border border-zinc-200">
                           {formatDateLabel(msg.createdAt)}
                         </div>
                       </div>
                     )}
 
-                    {/* ===== MESSAGE ===== */}
-                    <div
-                      className={`flex ${
+                    <div className={`flex ${msg.messageType === "SYSTEM" ? "justify-center" : isAgent ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[75%] transition-all ${
                         msg.messageType === "SYSTEM"
-                          ? "justify-center"
+                          ? "px-4 py-1 text-[11px] text-zinc-400 italic bg-transparent"
                           : isAgent
-                            ? "justify-end"
-                            : "justify-start"
-                      }`}
-                    >
-                      <div
-                        className={`max-w-lg text-sm transition ${
-                          msg.messageType === "SYSTEM"
-                            ? "px-3 py-1 text-xs text-gray-400 italic bg-transparent shadow-none"
-                            : isAgent
-                              ? "px-5 py-3 rounded-3xl shadow-md bg-black text-white"
-                              : "px-5 py-3 rounded-3xl shadow-md bg-white border border-gray-200"
-                        }`}
-                      >
+                            ? "px-4 py-3 rounded-2xl rounded-tr-none bg-zinc-900 text-white shadow-sm"
+                            : "px-4 py-3 rounded-2xl rounded-tl-none bg-white text-zinc-900 border border-zinc-200 shadow-sm"
+                      }`}>
                         {(() => {
                           switch (msg.messageType) {
                             case "IMAGE":
@@ -628,63 +545,39 @@ export default function AdminChatsPage() {
                                 <img
                                   src={msg.content}
                                   alt="attachment"
-                                  className="max-w-xs rounded-2xl cursor-pointer hover:scale-105 transition"
-                                  onClick={() => setZoomImage(msg.content)}
+                                  className="max-w-xs rounded-xl cursor-default"
                                 />
                               );
-
                             case "PRODUCT":
                               return (
-                                <div className="w-64 bg-white text-black rounded-2xl overflow-hidden shadow">
-                                  <img
-                                    src={msg.metadata?.thumbnail}
-                                    className="w-full h-36 object-cover"
-                                  />
+                                <div className="w-56 bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm">
+                                  <img src={msg.metadata?.thumbnail} className="w-full h-32 object-cover" />
                                   <div className="p-3">
-                                    <div className="font-semibold text-sm">
-                                      {msg.metadata?.name}
-                                    </div>
-
-                                    <div className="text-xs text-gray-500">
-                                      {msg.metadata?.brandName}
-                                    </div>
-
-                                    <div className="text-red-500 text-sm mt-1">
-                                      {msg.metadata?.price?.toLocaleString(
-                                        "vi-VN",
-                                      )}{" "}
-                                      đ
-                                    </div>
-
+                                    <div className="font-bold text-xs text-zinc-900 line-clamp-1">{msg.metadata?.name}</div>
+                                    <div className="text-[10px] font-bold text-zinc-400 uppercase mt-0.5">{msg.metadata?.brandName}</div>
+                                    <div className="text-zinc-900 font-bold text-xs mt-1.5">{msg.metadata?.price?.toLocaleString()}₫</div>
                                     <a
                                       href={`/products/${msg.metadata?.slug}`}
                                       target="_blank"
-                                      className="mt-2 block text-center bg-black text-white text-xs py-1 rounded"
+                                      className="mt-3 block text-center bg-zinc-900 text-white text-[10px] font-bold py-1.5 rounded uppercase tracking-wider hover:bg-zinc-800 transition-colors"
                                     >
-                                      View Product
+                                      View Item
                                     </a>
                                   </div>
                                 </div>
                               );
                             case "SYSTEM":
-                              return <div>{msg.content}</div>;
-
+                              return <div className="text-center">{msg.content}</div>;
                             default:
-                              return <div>{msg.content}</div>;
+                              return <div className="leading-relaxed text-[13px]">{msg.content}</div>;
                           }
                         })()}
 
-                        <div className="text-[11px] mt-2 opacity-60 text-right">
+                        <div className={`text-[9px] font-bold mt-2 flex items-center justify-end uppercase tracking-widest ${isAgent ? "text-zinc-400/80" : "text-zinc-400"}`}>
                           {formatTime(msg.createdAt)}
-
-                          {/* Hiển thị Đã xem */}
-                          {isAgent &&
-                            index === lastAgentIndex &&
-                            msg.isRead && (
-                              <div className="text-[10px] text-gray-400 mt-1">
-                                Đã xem
-                              </div>
-                            )}
+                          {isAgent && index === lastAgentIndex && msg.isRead && (
+                            <span className="ml-2 font-black">• Seen</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -695,36 +588,33 @@ export default function AdminChatsPage() {
 
             {/* ===== IMAGE PREVIEW ===== */}
             {previewImage && (
-              <div className="px-8 py-4 border-t bg-gray-50 flex items-center gap-4">
-                <img
-                  src={previewImage}
-                  className="w-20 h-20 object-cover rounded-xl shadow"
-                />
-                <div className="flex gap-3">
+              <div className="px-6 py-4 border-t border-zinc-200 bg-zinc-50 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <img src={previewImage} className="w-16 h-16 object-cover rounded-lg border border-zinc-200 shadow-sm" />
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Ready to send attachment</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setPreviewImage(null); setSelectedFile(null); }}
+                    className="px-4 py-2 text-xs font-bold text-zinc-500 hover:text-zinc-900 transition-colors uppercase tracking-widest"
+                  >
+                    Cancel
+                  </button>
                   <button
                     onClick={handleSendImage}
                     disabled={uploading}
-                    className="bg-black text-white px-4 py-2 rounded-full text-sm"
+                    className="bg-zinc-900 text-white px-5 py-2 rounded-lg text-xs font-bold hover:bg-zinc-800 disabled:opacity-40 transition-all uppercase tracking-widest"
                   >
-                    {uploading ? "Sending..." : "Send Image"}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setPreviewImage(null);
-                      setSelectedFile(null);
-                    }}
-                    className="px-4 py-2 border rounded-full text-sm"
-                  >
-                    Cancel
+                    {uploading ? "Uploading..." : "Send Attachment"}
                   </button>
                 </div>
               </div>
             )}
 
             {/* ===== INPUT AREA ===== */}
-            <div className="px-8 py-6 bg-white border-t">
-              {showProductDropdown && productResults.length > 0 && (
-                <div className="absolute bottom-30 left-150 right-8 bg-white shadow-2xl rounded-2xl w-150 max-h-72 overflow-y-auto z-50 border">
+            <div className="px-6 py-4 bg-white border-t border-zinc-200">
+               {showProductDropdown && productResults.length > 0 && (
+                <div className="absolute bottom-24 left-1/2 -translate-x-1/2 bg-white shadow-2xl rounded-xl w-full max-w-md max-h-64 overflow-y-auto z-50 border border-zinc-200 p-2 divide-y divide-zinc-100">
                   {productResults.map((product) => (
                     <div
                       key={product.id}
@@ -733,35 +623,23 @@ export default function AdminChatsPage() {
                         setInput("");
                         setShowProductDropdown(false);
                       }}
-                      className="flex items-center gap-3 p-3 hover:bg-gray-100 cursor-pointer transition"
+                      className="flex items-center gap-3 p-2 hover:bg-zinc-50 cursor-pointer transition rounded-lg"
                     >
-                      <img
-                        src={product.thumbnail}
-                        className="w-14 h-14 object-cover rounded-xl"
-                      />
-
+                      <img src={product.thumbnail} className="w-12 h-12 object-cover rounded-lg border border-zinc-200" />
                       <div className="flex-1">
-                        <div className="text-sm font-medium">
-                          {product.name}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {product.brandName}
-                        </div>
-                        <div className="text-xs text-red-500 mt-1">
-                          {(
-                            product.salePrice ?? product.originalPrice
-                          )?.toLocaleString("vi-VN")}{" "}
-                          đ
-                        </div>
+                        <div className="text-xs font-bold text-zinc-900">{product.name}</div>
+                        <div className="text-[10px] font-bold text-zinc-400 uppercase">{product.brandName}</div>
+                        <div className="text-xs font-bold text-zinc-900 mt-0.5">{(product.salePrice ?? product.originalPrice)?.toLocaleString()}₫</div>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-              <div className="flex items-center gap-3 bg-gray-100 rounded-3xl px-5 py-3 shadow-inner">
+              <div className="flex items-center gap-3 bg-zinc-100 rounded-xl px-4 py-2 border border-zinc-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-zinc-900 transition-all">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-2 rounded-full hover:bg-gray-200 transition"
+                  className="p-1.5 text-zinc-400 hover:text-zinc-900 transition-colors"
+                  title="Upload Image"
                 >
                   <Image size={18} />
                 </button>
@@ -779,38 +657,30 @@ export default function AdminChatsPage() {
                   onChange={(e) => {
                     const value = e.target.value;
                     setInput(value);
-
                     if (value.startsWith("/sp ")) {
                       const keyword = value.replace("/sp ", "").trim();
-
-                      if (debounceRef.current) {
-                        clearTimeout(debounceRef.current);
-                      }
-
+                      if (debounceRef.current) clearTimeout(debounceRef.current);
                       debounceRef.current = setTimeout(async () => {
                         if (keyword.length < 2) return;
-
                         try {
-                          const results =
-                            await adminChatApi.searchProducts(keyword);
+                          const results = await adminChatApi.searchProducts(keyword);
                           setProductResults(results);
                           setShowProductDropdown(true);
-                        } catch (err) {
-                          console.error("Search product failed", err);
-                        }
+                        } catch (err) { console.error(err); }
                       }, 400);
-                    } else {
+                    } else if (showProductDropdown) {
                       setShowProductDropdown(false);
                     }
                   }}
-                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                  className="flex-1 bg-transparent text-sm focus:outline-none"
-                  placeholder="Type message... (/sp to search product)"
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+                  placeholder="Type a message or use /sp to search products..."
+                  className="flex-1 bg-transparent border-none text-sm focus:ring-0 placeholder:text-zinc-400"
                 />
 
                 <button
                   onClick={handleSend}
-                  className="bg-black text-white px-5 py-2 rounded-full text-sm hover:scale-105 transition"
+                  disabled={!input.trim()}
+                  className="text-xs font-bold uppercase tracking-widest text-zinc-900 disabled:opacity-30 disabled:cursor-not-allowed hover:text-zinc-600 transition-colors"
                 >
                   Send
                 </button>
@@ -818,24 +688,17 @@ export default function AdminChatsPage() {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-lg">
-            Select a conversation
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-10 bg-zinc-50/50">
+            <div className="w-16 h-16 bg-white border border-zinc-200 rounded-2xl flex items-center justify-center text-zinc-300 mb-6 shadow-sm">
+                <Search size={32} />
+            </div>
+            <h3 className="text-lg font-bold text-zinc-900">Select a conversation</h3>
+            <p className="text-xs text-zinc-500 max-w-[240px] mt-2 leading-relaxed">
+              Choose a session from the left sidebar to start messaging and managing customer inquiries.
+            </p>
           </div>
         )}
       </div>
-
-      {/* ===== IMAGE ZOOM ===== */}
-      {zoomImage && (
-        <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[10000]"
-          onClick={() => setZoomImage(null)}
-        >
-          <img
-            src={zoomImage}
-            className="max-w-[90%] max-h-[90%] rounded-2xl shadow-2xl"
-          />
-        </div>
-      )}
     </div>
   );
 }

@@ -1,26 +1,30 @@
 import axiosClient from "@/lib/axiosClient";
+import { API_ENDPOINTS } from "@/config/api.config";
 
 export const adminProductApi = {
-  getAll: () => axiosClient.get("/api/admin/products"),
+  getAll: (params?: any) => axiosClient.get(API_ENDPOINTS.STAFF.PRODUCTS, { params }),
 
   getById: (id: string) =>
-    axiosClient.get(`/api/admin/products/${id}`),
+    axiosClient.get(API_ENDPOINTS.STAFF.PRODUCT_ID(id)),
 
   create: (data: any) =>
-    axiosClient.post("/api/admin/products", data),
+    axiosClient.post(API_ENDPOINTS.STAFF.PRODUCTS, data),
 
   update: (id: string, data: any) =>
-    axiosClient.put(`/api/admin/products/${id}`, data),
+    axiosClient.put(API_ENDPOINTS.STAFF.PRODUCT_ID(id), data),
 
   setStatus: (id: string, active: boolean) =>
-    axiosClient.patch(`/api/admin/products/${id}/status?active=${active}`),
+    axiosClient.patch(`${API_ENDPOINTS.STAFF.PRODUCT_STATUS(id)}?active=${active}`),
 
   softDelete: (id: string) =>
-    axiosClient.delete(`/api/admin/products/${id}`),
+    axiosClient.delete(API_ENDPOINTS.STAFF.PRODUCT_ID(id)),
 
   hardDelete: (id: string) =>
-    axiosClient.delete(`/api/admin/products/${id}/hard`),
+    axiosClient.delete(API_ENDPOINTS.ADMIN.PRODUCT_HARD_DELETE(id)),
+
+  search: (keyword: string) =>
+    axiosClient.get(API_ENDPOINTS.STAFF.PRODUCTS_SEARCH, { params: { keyword } }),
 
   restore: (id: string) =>
-    axiosClient.patch(`/api/admin/products/${id}/restore`),
+    axiosClient.patch(API_ENDPOINTS.ADMIN.PRODUCT_RESTORE(id)),
 };

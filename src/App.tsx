@@ -7,7 +7,7 @@ import ScrollToTop from "@/components/Page/ScrollToTop";
 
 import { Toaster } from "sonner";
 
-import RequireAdmin from "@/features/auth/components/RequireAdmin";
+import RequireRole from "@/features/auth/components/RequireAdmin";
 
 import MainLayout from "./layouts/MainLayout/MainLayout";
 import AuthLayout from "./layouts/AuthLayout/AuthLayout";
@@ -106,13 +106,19 @@ function App() {
           <Route path={ROUTES.ACCEPT_ACCOUNT} element={<AcceptAccountPage />} />
         </Route>
 
-        <Route element={<RequireAdmin />}>
+        <Route element={<RequireRole allowedRoles={["ADMIN", "STAFF"]} />}>
           {/* ===== ADMIN LAYOUT ===== */}
           <Route element={<AdminLayout />}>
-            <Route
-              path={ROUTES.ADMIN_DASHBOARD}
-              element={<AdminDashboardPage />}
-            />
+            {/* ROLE_ADMIN Only routes */}
+            <Route element={<RequireRole allowedRoles={["ADMIN"]} />}>
+              <Route
+                path={ROUTES.ADMIN_DASHBOARD}
+                element={<AdminDashboardPage />}
+              />
+              <Route path={ROUTES.ADMIN_USERS} element={<AdminUsersPage />} />
+            </Route>
+ 
+            {/* STAFF & ADMIN accessible routes */}
             <Route
               path={ROUTES.ADMIN_PRODUCTS}
               element={<AdminProductsPage />}
@@ -132,13 +138,12 @@ function App() {
               path={ROUTES.ADMIN_ORDER_DETAIL(":orderId")}
               element={<AdminOrderDetailPage />}
             />
-            <Route path={ROUTES.ADMIN_USERS} element={<AdminUsersPage />} />
             <Route path={ROUTES.ADMIN_COUPONS} element={<AdminCouponsPage />} />
             <Route path={ROUTES.ADMIN_CHATS} element={<AdminChatsPage />} />
             {/* 
-        <Route path={ROUTES.ADMIN_REVIEWS} element={<AdminReviewsPage />} />
-        <Route path={ROUTES.ADMIN_KNOWLEDGE_BASE} element={<AdminKnowledgeBasePage />}
-        /> */}
+            <Route path={ROUTES.ADMIN_REVIEWS} element={<AdminReviewsPage />} />
+            <Route path={ROUTES.ADMIN_KNOWLEDGE_BASE} element={<AdminKnowledgeBasePage />}
+            /> */}
           </Route>
         </Route>
       </Routes>

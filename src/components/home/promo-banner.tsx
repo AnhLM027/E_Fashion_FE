@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
+import { ROUTES } from "@/config/routes";
 
 export function PromoBanner() {
   return (
@@ -29,7 +30,7 @@ export function PromoBanner() {
                   size="lg"
                   className="rounded-none bg-black px-10 py-6 text-sm uppercase tracking-widest text-white transition hover:bg-neutral-800"
                 >
-                  <Link to="/products/category/nam">Mua ngay</Link>
+                  <Link to={ROUTES.productsByCategory("nam")}>Mua ngay</Link>
                 </Button>
 
                 <Button
@@ -37,7 +38,7 @@ export function PromoBanner() {
                   size="lg"
                   className="rounded-none border border-black bg-transparent px-10 py-6 text-sm uppercase tracking-widest transition hover:bg-black hover:text-white"
                 >
-                  <Link to="/products">Xem tất cả</Link>
+                  <Link to={ROUTES.PRODUCTS}>Xem tất cả</Link>
                 </Button>
               </div>
             </div>

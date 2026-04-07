@@ -3,6 +3,12 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { AuthContext } from "@/features/auth/context/AuthContext";
 import { authApi } from "@/features/auth/api/auth.api";
+import { addressApi } from "@/features/address/api/address.api";
+import type { CustomerAddress, CreateAddressRequest } from "@/features/address/types/address.types";
+import { AddressList } from "@/features/address/components/AddressList";
+import { AddressForm } from "@/features/address/components/AddressForm";
+import { toast } from "sonner";
+import { MapPin, User as UserIcon, Lock, Plus } from "lucide-react";
 
 type Gender = "MALE" | "FEMALE" | "OTHER";
 
@@ -12,7 +18,64 @@ const ProfilePage = () => {
 
   const { user, isLoading, updateUser } = auth;
 
-  const [activeTab, setActiveTab] = useState<"info" | "password">("info");
+  const [activeTab, setActiveTab] = useState<"info" | "password" | "address">("info");
+  const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<CustomerAddress | null>(null);
+  const [addressLoading, setAddressLoading] = useState(false);
+
+  /* ================= ADDRESS LOGIC ================= */
+  const fetchAddresses = async () => {
+    try {
+      setAddressLoading(true);
+      const data = await addressApi.getAddresses();
+      setAddresses(data);
+    } catch (error) {
+      console.error("Failed to fetch addresses", error);
+    } finally {
+      setAddressLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && activeTab === "address") {
+      fetchAddresses();
+    }
+  }, [user, activeTab]);
+
+  const handleCreateOrUpdateAddress = async (data: CreateAddressRequest) => {
+    try {
+      setAddressLoading(true);
+      if (editingAddress) {
+        await addressApi.patchAddress(editingAddress.id, data);
+        toast.success("Cập nhật địa chỉ thành công");
+      } else {
+        await addressApi.createAddress(data);
+        toast.success("Thêm địa chỉ mới thành công");
+      }
+      setIsAddingAddress(false);
+      setEditingAddress(null);
+      fetchAddresses();
+    } catch (error) {
+      toast.error("Thao tác thất bại");
+    } finally {
+      setAddressLoading(false);
+    }
+  };
+
+  const handleDeleteAddress = async (id: string) => {
+    if (!window.confirm("Bạn có chắc muốn xóa địa chỉ này?")) return;
+    try {
+      setAddressLoading(true);
+      await addressApi.deleteAddress(id);
+      toast.success("Xóa địa chỉ thành công");
+      fetchAddresses();
+    } catch (error) {
+      toast.error("Xóa thất bại");
+    } finally {
+      setAddressLoading(false);
+    }
+  };
 
   const [form, setForm] = useState({
     fullName: "",
@@ -132,24 +195,35 @@ const ProfilePage = () => {
           <div className="space-y-2">
             <button
               onClick={() => setActiveTab("info")}
-              className={`w-full text-left px-4 py-2 rounded-full text-sm transition ${
+              className={`w-full text-left px-5 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-300 flex items-center gap-3 ${
                 activeTab === "info"
-                  ? "bg-black text-white"
-                  : "hover:bg-gray-100"
+                  ? "bg-zinc-900 text-white shadow-xl shadow-zinc-200/50"
+                  : "hover:bg-zinc-50 text-zinc-400 hover:text-zinc-900"
               }`}
             >
-              Thông tin cá nhân
+              <UserIcon size={16} strokeWidth={2.5} /> Thông tin cá nhân
+            </button>
+
+            <button
+              onClick={() => setActiveTab("address")}
+              className={`w-full text-left px-5 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-300 flex items-center gap-3 ${
+                activeTab === "address"
+                  ? "bg-zinc-900 text-white shadow-xl shadow-zinc-200/50"
+                  : "hover:bg-zinc-50 text-zinc-400 hover:text-zinc-900"
+              }`}
+            >
+              <MapPin size={16} strokeWidth={2.5} /> Sổ địa chỉ
             </button>
 
             <button
               onClick={() => setActiveTab("password")}
-              className={`w-full text-left px-4 py-2 rounded-full text-sm transition ${
+              className={`w-full text-left px-5 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-300 flex items-center gap-3 ${
                 activeTab === "password"
-                  ? "bg-black text-white"
-                  : "hover:bg-gray-100"
+                  ? "bg-zinc-900 text-white shadow-xl shadow-zinc-200/50"
+                  : "hover:bg-zinc-50 text-zinc-400 hover:text-zinc-900"
               }`}
             >
-              Đổi mật khẩu
+              <Lock size={16} strokeWidth={2.5} /> Đổi mật khẩu
             </button>
           </div>
         </div>
@@ -206,6 +280,44 @@ const ProfilePage = () => {
               >
                 {loading ? "Đang cập nhật..." : "Lưu thay đổi"}
               </Button>
+            </div>
+          )}
+
+          {activeTab === "address" && (
+            <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="flex justify-between items-end border-b border-zinc-100 pb-8">
+                <div className="space-y-1">
+                  <h1 className="text-4xl font-bold tracking-tight text-zinc-900">Sổ địa chỉ</h1>
+                  <p className="text-zinc-400 text-sm font-medium">Quản lý không gian giao nhận hàng của bạn</p>
+                </div>
+                {!isAddingAddress && !editingAddress && (
+                  <Button
+                    onClick={() => setIsAddingAddress(true)}
+                    className="bg-zinc-900 text-white px-8 py-3.5 rounded-2xl hover:bg-zinc-800 transition-all flex items-center gap-3 font-bold text-xs uppercase tracking-widest shadow-2xl shadow-zinc-200/50"
+                  >
+                    <Plus size={16} strokeWidth={3} /> Thêm địa chỉ mới
+                  </Button>
+                )}
+              </div>
+
+              {(isAddingAddress || editingAddress) ? (
+                <AddressForm 
+                  initialData={editingAddress}
+                  onSubmit={handleCreateOrUpdateAddress}
+                  onCancel={() => {
+                    setIsAddingAddress(false);
+                    setEditingAddress(null);
+                  }}
+                  loading={addressLoading}
+                />
+              ) : (
+                <AddressList 
+                  addresses={addresses}
+                  onEdit={setEditingAddress}
+                  onDelete={handleDeleteAddress}
+                  loading={addressLoading}
+                />
+              )}
             </div>
           )}
 

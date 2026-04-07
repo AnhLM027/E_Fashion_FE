@@ -1,24 +1,25 @@
 import axiosClient from "@/lib/axiosClient";
+import { API_ENDPOINTS } from "@/config/api.config";
 
 export const adminImageApi = {
   create: (variantId: string, data: any) =>
     axiosClient.post(
-      `/api/admin/product-variants/${variantId}/images`,
+      API_ENDPOINTS.STAFF.VARIANT_IMAGES_BY_VARIANT(variantId),
       data
     ),
 
   getByVariant: (variantId: string) =>
     axiosClient.get(
-      `/api/admin/product-variants/${variantId}/images`
+      API_ENDPOINTS.STAFF.VARIANT_IMAGES_BY_VARIANT(variantId)
     ),
 
   setPrimary: (variantId: string, id: string) =>
     axiosClient.patch(
-      `/api/admin/product-variants/${variantId}/images/${id}/primary`
+      `${API_ENDPOINTS.STAFF.VARIANT_IMAGES_BY_VARIANT(variantId)}/${id}/primary`
     ),
 
   delete: (variantId: string, id: string) =>
     axiosClient.delete(
-      `/api/admin/product-variants/${variantId}/images/${id}`
+      `${API_ENDPOINTS.STAFF.VARIANT_IMAGES_BY_VARIANT(variantId)}/${id}`
     ),
 };

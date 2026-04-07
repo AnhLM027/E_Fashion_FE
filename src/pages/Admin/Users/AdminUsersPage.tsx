@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
 import {
   adminUserApi,
   type AdminUser,
@@ -7,6 +6,11 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/store/store";
 import { logout } from "@/features/auth/slices/authSlice";
+import { useNavigate } from "react-router-dom";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { Pagination } from "@/components/ui/Pagination";
+import { Search, Shield, User, MoreVertical } from "lucide-react";
+import { formatDate } from "@/utils/format";
 
 const AdminUsersPage = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -20,16 +24,12 @@ const AdminUsersPage = () => {
   const [totalPages, setTotalPages] = useState(0);
 
   const currentUser = useSelector((state: RootState) => state.auth.user);
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  /* ================= FETCH ================= */
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-
       const res = await adminUserApi.getUsers({
         search: search || undefined,
         role: roleFilter || undefined,
@@ -37,7 +37,6 @@ const AdminUsersPage = () => {
         page,
         size: 10,
       });
-
       setUsers(res.content);
       setTotalPages(res.totalPages);
     } catch (error) {
@@ -51,8 +50,6 @@ const AdminUsersPage = () => {
     fetchUsers();
   }, [page, search, roleFilter, activeFilter]);
 
-  /* ================= ACTION ================= */
-
   const toggleActive = async (user: AdminUser) => {
     try {
       if (user.isActive) {
@@ -60,42 +57,31 @@ const AdminUsersPage = () => {
       } else {
         await adminUserApi.activate(user.id);
       }
-
       fetchUsers();
     } catch (error) {
       console.error("Failed to update status", error);
     }
   };
 
-  const updateRole = async (user: AdminUser, newRole: "ADMIN" | "CUSTOMER") => {
+  const updateRole = async (
+    user: AdminUser,
+    newRole: "ADMIN" | "STAFF" | "CUSTOMER",
+  ) => {
     if (user.role === newRole) return;
-
     const confirmChange = window.confirm(
-      `Bạn có chắc muốn đổi role của ${user.email} từ ${user.role} → ${newRole}?`,
+      `Are you sure you want to change ${user.email}'s role from ${user.role} → ${newRole}?`,
     );
-
     if (!confirmChange) {
       fetchUsers();
       return;
     }
-
     try {
-      await adminUserApi.update(user.id, {
-        role: newRole,
-      });
-
-      console.log("BUG", currentUser, newRole)
-
-      // 🔥 Nếu admin tự hạ role của chính mình
+      await adminUserApi.update(user.id, { role: newRole });
       if (currentUser?.email === user.email && newRole === "CUSTOMER") {
-        // Logout hoàn toàn
         dispatch(logout());
-
-        console.log(newRole)
         navigate("/", { replace: true });
         return;
       }
-
       fetchUsers();
     } catch (error) {
       console.error("Failed to update role", error);
@@ -103,152 +89,156 @@ const AdminUsersPage = () => {
     }
   };
 
-  /* ================= UI ================= */
+  const columns = useMemo<Column<AdminUser>[]>(() => [
+    {
+      key: "email",
+      header: "User Account",
+      render: (u) => (
+        <div className="flex flex-col">
+          <span className="font-medium text-zinc-900">{u.fullName || "N/A"}</span>
+          <span className="text-xs text-zinc-400">{u.email}</span>
+        </div>
+      )
+    },
+    {
+      key: "phone",
+      header: "Phone Number",
+      render: (u) => <span className="text-zinc-500">{u.phone || "—"}</span>
+    },
+    {
+      key: "role",
+      header: "Role",
+      render: (u) => (
+        <div className="flex items-center gap-2">
+          {u.role === "ADMIN" ? (
+            <Shield size={14} className="text-indigo-500" />
+          ) : u.role === "STAFF" ? (
+            <Shield size={14} className="text-emerald-500" />
+          ) : (
+            <User size={14} className="text-zinc-400" />
+          )}
+          <select
+            value={u.role}
+            onChange={(e) =>
+              updateRole(
+                u,
+                e.target.value as "ADMIN" | "STAFF" | "CUSTOMER",
+              )
+            }
+            className="bg-transparent border-none text-xs font-medium focus:ring-0 cursor-pointer hover:underline p-0"
+          >
+            <option value="ADMIN">Administrator</option>
+            <option value="STAFF">Staff Member</option>
+            <option value="CUSTOMER">Customer</option>
+          </select>
+        </div>
+      )
+    },
+    {
+      key: "isActive",
+      header: "Status",
+      render: (u) => (
+        <div 
+          onClick={() => toggleActive(u)}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium cursor-pointer transition-all ${
+            u.isActive 
+              ? "bg-green-50 text-green-700 hover:bg-green-100" 
+              : "bg-rose-50 text-rose-600 hover:bg-rose-100"
+          }`}
+        >
+          <div className={`w-1.5 h-1.5 rounded-full ${u.isActive ? "bg-green-500" : "bg-rose-500 animate-pulse"}`} />
+          {u.isActive ? "Active" : "Locked"}
+        </div>
+      )
+    },
+    {
+      key: "createdAt",
+      header: "Join Date",
+      render: (u) => <span className="text-[11px] text-zinc-400">{formatDate(u.createdAt)}</span>
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      render: () => (
+        <button className="p-2 hover:bg-zinc-100 rounded-lg transition text-zinc-400 hover:text-zinc-900">
+          <MoreVertical size={16} />
+        </button>
+      )
+    }
+  ], [currentUser, users]);
 
   return (
-    <div className="p-8 space-y-6 bg-neutral-50 min-h-screen">
-      <h1 className="text-2xl font-bold">Users</h1>
+    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900">Users</h1>
+          <p className="text-sm text-zinc-500">Manage administrative and customer accounts</p>
+        </div>
+        
+        {/* FILTERS */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+            <input
+              placeholder="Search by email..."
+              className="pl-9 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm w-64 focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all"
+              value={search}
+              onChange={(e) => {
+                setPage(0);
+                setSearch(e.target.value);
+              }}
+            />
+          </div>
 
-      {/* FILTER BAR */}
-      <div className="flex flex-wrap gap-4">
-        <input
-          placeholder="Search by email..."
-          className="border px-3 py-2 rounded-lg"
-          value={search}
-          onChange={(e) => {
-            setPage(0);
-            setSearch(e.target.value);
-          }}
-        />
+          <div className="flex items-center gap-2 bg-zinc-50 p-1 rounded-lg border border-zinc-200">
+            <select
+              className="bg-transparent border-none text-xs font-semibold px-3 py-1.5 focus:ring-0 cursor-pointer"
+               value={roleFilter}
+              onChange={(e) => {
+                setPage(0);
+                setRoleFilter(e.target.value);
+              }}
+            >
+              <option value="">All Roles</option>
+              <option value="ADMIN">Administrator</option>
+              <option value="STAFF">Staff</option>
+              <option value="CUSTOMER">Customer</option>
+            </select>
+            
+            <div className="w-px h-4 bg-zinc-200" />
 
-        <select
-          className="border px-3 py-2 rounded-lg"
-          value={roleFilter}
-          onChange={(e) => {
-            setPage(0);
-            setRoleFilter(e.target.value);
-          }}
-        >
-          <option value="">All Roles</option>
-          <option value="ADMIN">ADMIN</option>
-          <option value="CUSTOMER">CUSTOMER</option>
-        </select>
-
-        <select
-          className="border px-3 py-2 rounded-lg"
-          value={activeFilter}
-          onChange={(e) => {
-            setPage(0);
-            setActiveFilter(e.target.value);
-          }}
-        >
-          <option value="">All Status</option>
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
-        </select>
+            <select
+              className="bg-transparent border-none text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 focus:ring-0 cursor-pointer"
+               value={activeFilter}
+              onChange={(e) => {
+                setPage(0);
+                setActiveFilter(e.target.value);
+              }}
+            >
+              <option value="">All Status</option>
+              <option value="true">Active Only</option>
+              <option value="false">Locked Only</option>
+            </select>
+          </div>
+        </div>
       </div>
 
-      {/* TABLE */}
-      <div className="bg-white rounded-xl shadow overflow-hidden">
-        {loading ? (
-          <div className="p-6 text-center">Loading...</div>
-        ) : users.length === 0 ? (
-          <div className="p-6 text-center text-neutral-500">No users found</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-neutral-100 text-left">
-              <tr>
-                <th className="p-4">Email</th>
-                <th className="p-4">Name</th>
-                <th className="p-4">Phone</th>
-                <th className="p-4">Gender</th>
-                <th className="p-4">Role</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Created</th>
-                <th className="p-4 text-right">Action</th>
-              </tr>
-            </thead>
+      <DataTable 
+        data={users}
+        columns={columns}
+        loading={loading}
+        emptyMessage="No users matching your criteria"
+      />
 
-            <tbody>
-              {users.map((u) => (
-                <tr
-                  key={u.id}
-                  className="border-t hover:bg-neutral-50 transition"
-                >
-                  <td className="p-4">{u.email}</td>
-                  <td className="p-4">{u.fullName || "-"}</td>
-                  <td className="p-4">{u.phone || "-"}</td>
-                  <td className="p-4">{u.gender || "-"}</td>
-
-                  {/* UPDATE ROLE DROPDOWN */}
-                  <td className="p-4">
-                    <select
-                      value={u.role}
-                      onChange={(e) =>
-                        updateRole(u, e.target.value as "ADMIN" | "CUSTOMER")
-                      }
-                      className="border rounded px-2 py-1 text-xs"
-                    >
-                      <option value="ADMIN">ADMIN</option>
-                      <option value="CUSTOMER">CUSTOMER</option>
-                    </select>
-                  </td>
-
-                  <td className="p-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        u.isActive
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-600"
-                      }`}
-                    >
-                      {u.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-
-                  <td className="p-4">
-                    {new Date(u.createdAt).toLocaleDateString()}
-                  </td>
-
-                  <td className="p-4 text-right space-x-3">
-                    <button
-                      onClick={() => toggleActive(u)}
-                      className="text-sm underline"
-                    >
-                      {u.isActive ? "Deactivate" : "Activate"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {/* PAGINATION */}
-      <div className="flex justify-between items-center">
-        <button
-          disabled={page === 0}
-          onClick={() => setPage((p) => p - 1)}
-          className="px-3 py-1 border rounded disabled:opacity-30"
-        >
-          Previous
-        </button>
-
-        <span>
-          Page {page + 1} / {totalPages}
-        </span>
-
-        <button
-          disabled={page + 1 >= totalPages}
-          onClick={() => setPage((p) => p + 1)}
-          className="px-3 py-1 border rounded disabled:opacity-30"
-        >
-          Next
-        </button>
-      </div>
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 };
 
 export default AdminUsersPage;
+

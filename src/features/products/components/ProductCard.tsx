@@ -56,7 +56,7 @@ export function ProductCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Link to={`${ROUTES.PRODUCTS}/${product.slug}`} className="block">
+      <Link to={ROUTES.productDetail(product.slug)} className="block">
         {/* Image */}
         <div className="relative aspect-[3/4] overflow-hidden rounded-t-2xl bg-gray-100">
           <img

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { HomeProductCard } from "@/features/products/components/HomeProductCard";
 import { useProducts } from "@/features/products/hooks/useProducts";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/config/routes";
 
 const tabs = [
   { id: "new", label: "Hàng mới về" },
@@ -36,7 +37,9 @@ export function FeaturedProducts({ embedded = false }: { embedded?: boolean }) {
 
   if (loading) {
     return (
-      <section className="py-20 text-center">Đang tải sản phẩm...</section>
+      <section className="py-20 text-center text-zinc-400 uppercase tracking-widest text-xs">
+        Đang tải sản phẩm nổi bật...
+      </section>
     );
   }
 
@@ -98,7 +101,7 @@ export function FeaturedProducts({ embedded = false }: { embedded?: boolean }) {
             size="lg"
             className="rounded-none border border-black bg-transparent px-12 py-3 text-sm uppercase tracking-widest transition-all hover:bg-black hover:text-white"
           >
-            <Link to="/products">Xem tất cả sản phẩm</Link>
+            <Link to={ROUTES.PRODUCTS}>Xem tất cả sản phẩm</Link>
           </Button>
         </div>
       </div>

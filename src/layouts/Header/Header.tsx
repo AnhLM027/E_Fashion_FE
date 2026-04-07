@@ -1,30 +1,29 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
   ShoppingCart,
-  Package,
   User,
-  LogOut,
   Heart,
+  LogOut,
   LayoutDashboard,
   ChevronDown,
   TicketPercent,
-  ChevronRight,
+  Package,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { ROUTES } from "@/config/routes";
+import { ROUTES } from "../../config/routes";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { fetchCart } from "@/features/cart/slices/cartSlice";
 import { useCategoryTree, type Category } from "@/hooks/useCategoryTree";
 import type { RootState, AppDispatch } from "@/store/store";
+import { cn } from "@/lib/utils";
 
 export function Header() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [keyword, setKeyword] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -37,7 +36,12 @@ export function Header() {
   const { items } = useSelector((state: RootState) => state.cart);
   const { categories } = useCategoryTree();
 
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const isAdmin = user?.role === "ADMIN";
+  const isStaff = user?.role === "STAFF";
+  const isManagement = isAdmin || isStaff;
+
   const totalQuantity = items.reduce((t, i) => t + i.quantity, 0);
 
   // ================= LOGIC CŨ GIỮ NGUYÊN =================
@@ -100,25 +104,22 @@ export function Header() {
       >
         <div className="flex items-center justify-between group">
           <Link
-            to={`/products/category/${node.slug}`}
+            to={ROUTES.productsByCategory(node.slug)}
             onClick={() => setActiveMega(null)}
             className={`
             block transition-all duration-200 flex-1
-            ${
-              level === 0
+            ${level === 0
                 ? "font-bold uppercase text-[13px] tracking-wider mb-2 pb-1 border-b border-zinc-100 text-zinc-900"
                 : ""
-            }
-            ${
-              level === 1
+              }
+            ${level === 1
                 ? "font-semibold text-zinc-700 hover:text-indigo-600 text-[14px]"
                 : ""
-            }
-            ${
-              level >= 2
+              }
+            ${level >= 2
                 ? "text-[13px] text-zinc-500 hover:text-zinc-900 hover:translate-x-1"
                 : ""
-            }
+              }
           `}
           >
             {node.name}
@@ -131,9 +132,8 @@ export function Header() {
             >
               <ChevronDown
                 size={14}
-                className={`transition-transform duration-200 ${
-                  open ? "rotate-180" : ""
-                }`}
+                className={`transition-transform duration-200 ${open ? "rotate-180" : ""
+                  }`}
               />
             </button>
           )}
@@ -185,68 +185,66 @@ export function Header() {
           </Link>
 
           {/* NAVIGATION */}
-          <nav
-            className="hidden lg:flex items-center gap-8 h-full"
-            onMouseLeave={() => setActiveMega(null)}
-          >
+          <nav className="hidden lg:flex items-center h-full">
             <Link
-              to="/products"
-              className="text-[12px] font-bold uppercase tracking-widest text-zinc-600 hover:text-black"
+              to={ROUTES.PRODUCTS}
+              className="text-[12px] font-bold uppercase tracking-widest text-zinc-600 hover:text-black px-4"
             >
               Tất cả
             </Link>
 
-            {categories.map((root) => (
-              <div
-                key={root.id}
-                className="h-full flex items-center relative group"
-                onMouseEnter={() => setActiveMega(root.id)}
-                onMouseLeave={() => setActiveMega(null)}
-              >
-                <Link
-                  to={`/products/category/${root.slug}`}
-                  className="text-[12px] font-bold uppercase tracking-widest text-zinc-600 group-hover:text-black flex items-center gap-1"
-                >
-                  {root.name}
-                  <ChevronDown className="h-3 w-3" />
-                </Link>
+            {categories.map((root) => {
+              const isOpen = activeMega === root.id;
 
-                {/* MEGA MENU ĐÃ FIX ĐỆ QUY */}
-                <AnimatePresence>
-                  {activeMega === root.id && root.children.length > 0 && (
-                    <motion.div
-                      onMouseEnter={() => setActiveMega(root.id)}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 6 }}
-                      transition={{ duration: 0.18 }}
-                      className="fixed left-0 right-0 top-[80px] bg-white border-t border-zinc-100 shadow-xl z-[60]
-             before:content-[''] before:absolute before:w-full before:h-[20px] before:top-[-20px] before:left-0"
-                    >
-                      {/* Lớp before ở trên đóng vai trò là cây cầu tàng hình nối từ Header xuống Menu */}
-                      <div className="max-w-7xl mx-auto px-10 py-10">
-                        <div className="grid grid-cols-4 gap-10 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
-                          {root.children.map((child) => (
-                            <CategoryNode key={child.id} node={child} />
-                          ))}
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ))}
+              return (
+                <div
+                  key={root.id}
+                  className="h-full flex items-center relative px-4"
+                  onMouseEnter={() => {
+                    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+                    setActiveMega(root.id);
+                  }}
+                  onMouseLeave={() => {
+                    hoverTimeoutRef.current = setTimeout(() => {
+                      setActiveMega(null);
+                    }, 100);
+                  }}
+                >
+                  <Link
+                    to={ROUTES.productsByCategory(root.slug)}
+                    className={cn(
+                      "text-[12px] font-bold uppercase tracking-widest transition-colors flex items-center gap-1 h-full",
+                      isOpen ? "text-black" : "text-zinc-600 hover:text-black"
+                    )}
+                  >
+                    {root.name}
+                    <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", isOpen && "rotate-180")} />
+                  </Link>
+                </div>
+              );
+            })}
           </nav>
 
           {/* ACTIONS (SEARCH, USER, CART) */}
           <div className="ml-auto flex items-center gap-4">
+            {/* MANAGEMENT SHORTCUT (FOR ADMIN/STAFF) */}
+            {isManagement && (
+              <Link
+                to={isAdmin ? ROUTES.ADMIN_DASHBOARD : ROUTES.ADMIN_ORDERS}
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full hover:bg-indigo-100 transition-all text-[11px] font-bold uppercase tracking-wider border border-indigo-100 shadow-sm"
+              >
+                <LayoutDashboard size={14} />
+                Quản trị
+              </Link>
+            )}
+
             {/* SEARCH ĐÃ FIX CLICK */}
             <div className="relative" onClick={(e) => e.stopPropagation()}>
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (!keyword.trim()) return;
-                  navigate(`/products?q=${keyword}`);
+                  navigate(`${ROUTES.PRODUCTS}?q=${keyword}`);
                   setShowDropdown(false);
                 }}
                 className="h-10 flex items-center gap-2 rounded-full border border-zinc-200 px-4 bg-zinc-50 focus-within:bg-white focus-within:ring-2 focus-within:ring-zinc-100 transition-all"
@@ -345,9 +343,9 @@ export function Header() {
                             {user?.email}
                           </p>
                         </div>
-                        {isAdmin && (
+                        {isManagement && (
                           <MenuLink
-                            to={ROUTES.ADMIN_DASHBOARD}
+                            to={isAdmin ? ROUTES.ADMIN_DASHBOARD : ROUTES.ADMIN_ORDERS}
                             icon={<LayoutDashboard size={16} />}
                             text="Quản trị"
                           />
@@ -411,6 +409,61 @@ export function Header() {
           </div>
         </div>
       </div>
+
+      {/* ROBUST FULL-WIDTH MEGA MENU (ATTACHED TO HEADER BOTTOM) */}
+      <AnimatePresence>
+        {activeMega && (
+          <motion.div
+            onMouseEnter={() => {
+              if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+            }}
+            onMouseLeave={() => {
+              hoverTimeoutRef.current = setTimeout(() => {
+                setActiveMega(null);
+              }, 100);
+            }}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="absolute top-full left-0 right-0 bg-white border-t border-zinc-100 shadow-[0_30px_60px_rgba(0,0,0,0.1)] z-[60]"
+          >
+            {categories.map((root) => (
+              activeMega === root.id && root.children.length > 0 && (
+                <div key={root.id} className="max-w-7xl mx-auto px-10 py-12">
+                  <div className="grid grid-cols-5 gap-12 max-h-[65vh] overflow-y-auto pr-6 custom-scrollbar">
+                    {/* FIRST COLUMN: PROMO OR HEADER */}
+                    <div className="col-span-1 border-r border-zinc-100 pr-8">
+                      <h4 className="text-[11px] uppercase tracking-[0.2em] font-black text-black mb-6">
+                        BỘ SƯU TẬP {root.name}
+                      </h4>
+                      <p className="text-xs text-zinc-400 leading-relaxed font-medium mb-6">
+                        Khám phá những thiết kế mới nhất và xu hướng dẫn đầu cho mùa này.
+                      </p>
+                      <Link 
+                        to={ROUTES.productsByCategory(root.slug)}
+                        onClick={() => setActiveMega(null)}
+                        className="inline-block text-[10px] uppercase tracking-widest font-black border-b-2 border-black pb-1 hover:text-zinc-500 hover:border-zinc-300 transition-colors"
+                      >
+                        XEM TẤT CẢ
+                      </Link>
+                    </div>
+
+                    {/* CATEGORY COLUMNS */}
+                    <div className="col-span-4">
+                      <div className="grid grid-cols-4 gap-10">
+                        {root.children.map((child) => (
+                          <CategoryNode key={child.id} node={child} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { MoreVertical } from "lucide-react";
-
+import { Search, Plus, MoreVertical, Edit2, Trash2, RotateCcw, Eye } from "lucide-react";
 import { adminProductApi } from "@/features/admin/api/adminProductApi";
 import { adminBrandApi } from "@/features/admin/api/adminBrandApi";
-
 import { useCategoryTree } from "@/hooks/useCategoryTree";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { toast } from "sonner";
 
 interface ProductRequest {
   name: string;
@@ -37,79 +39,90 @@ interface Brand {
 
 const AdminProductsPage = () => {
   const navigate = useNavigate();
-
   const [products, setProducts] = useState<Product[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
-  const { leafCategoryOptions } = useCategoryTree();
-
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  const [filterBrand, setFilterBrand] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
-  const [search, setSearch] = useState("");
+  const { allCategoryOptions } = useCategoryTree();
 
   const [loading, setLoading] = useState(false);
 
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  // Filters State
+  const [search, setSearch] = useState("");
+  const [filterBrand, setFilterBrand] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
 
   const [openModal, setOpenModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-
   const [form, setForm] = useState<ProductRequest>({
     name: "",
     description: "",
     categoryId: "",
     brandId: "",
-    isActive: false,
+    isActive: true,
     thumbnailUrl: "",
   });
 
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-
-  /* ================= FETCH ================= */
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    const data = await adminProductApi.getAll();
-    setProducts(data);
-    setLoading(false);
-  };
-
-  const fetchBrands = async () => {
-    const data = await adminBrandApi.getAll();
-    setBrands(data);
-  };
-
-  const handleRestore = async (id: string) => {
-    await adminProductApi.restore(id);
-    fetchProducts();
+  const fetchInitialData = async () => {
+    try {
+      setLoading(true);
+      // Fetch all products for local filtering
+      const [productRes, brandRes] = await Promise.all([
+        adminProductApi.getAll(),
+        adminBrandApi.getAll()
+      ]);
+      setProducts(Array.isArray(productRes) ? productRes : []);
+      setBrands(Array.isArray(brandRes) ? brandRes : []);
+    } catch (error) {
+      console.error("Failed to fetch initial data", error);
+      toast.error("Failed to load products");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchProducts();
-    fetchBrands();
+    fetchInitialData();
   }, []);
 
-  /* ================= FORM ================= */
+  // FRONTEND ONLY FILTERING LOGIC
+  // This ensures lightning fast updates and avoids backend parameter mismatches
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      // 1. Search Keyword (Name or slug)
+      const matchesSearch = !search.trim() || 
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.slug?.toLowerCase().includes(search.toLowerCase());
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
-  ) => {
-    const { name, value, type } = e.target;
+      // 2. Brand
+      const matchesBrand = !filterBrand || p.brandId === filterBrand;
 
-    setForm((prev) => ({
-      ...prev,
-      [name]:
-        type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    }));
+      // 3. Category
+      const matchesCategory = !filterCategory || p.categoryId === filterCategory;
+
+      // 4. Status
+      const statusValue = filterStatus === "active" ? true : filterStatus === "inactive" ? false : null;
+      const matchesStatus = statusValue === null || p.isActive === statusValue;
+
+      return matchesSearch && matchesBrand && matchesCategory && matchesStatus;
+    });
+  }, [products, search, filterBrand, filterCategory, filterStatus]);
+
+  const handleToggleStatus = async (id: string, currentActive: boolean) => {
+    try {
+      // Optimistic update
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, isActive: !currentActive } : p));
+      await adminProductApi.setStatus(id, !currentActive);
+      toast.success("Status updated");
+    } catch (error) {
+      // Rollback on error
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, isActive: currentActive } : p));
+      toast.error("Failed to update status");
+    }
   };
 
   const handleEdit = (product: Product) => {
     setEditingId(product.id);
-
     setForm({
       name: product.name,
       description: product.description,
@@ -118,494 +131,270 @@ const AdminProductsPage = () => {
       isActive: product.isActive,
       thumbnailUrl: product.thumbnail || "",
     });
-
     setOpenModal(true);
   };
 
-  const resetForm = () => {
-    setForm({
-      name: "",
-      description: "",
-      categoryId: "",
-      brandId: "",
-      isActive: false,
-      thumbnailUrl: "",
-    });
-    setEditingId(null);
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Move to trash?")) return;
+    try {
+      await adminProductApi.softDelete(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+      toast.success("Product moved to trash");
+    } catch (error) {
+      toast.error("Operation failed");
+    }
+  };
+
+  const handleHardDelete = async (id: string) => {
+    if (!window.confirm("PERMANENT DELETE?")) return;
+    try {
+      await adminProductApi.hardDelete(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+      toast.success("Deleted permanently");
+    } catch (error) {
+      toast.error("Operation failed");
+    }
   };
 
   const handleSubmit = async () => {
     if (!form.name.trim()) return;
-
     try {
       setCreating(true);
-
       if (editingId) {
         await adminProductApi.update(editingId, form);
+        toast.success("Updated successfully");
       } else {
         await adminProductApi.create(form);
+        toast.success("Created successfully");
       }
-
-      resetForm();
-      setEditingId(null);
       setOpenModal(false);
-      fetchProducts();
+      setEditingId(null);
+      fetchInitialData(); // Refresh list after create/update
+    } catch (error) {
+      toast.error("Operation failed");
     } finally {
       setCreating(false);
     }
   };
 
-  /* ================= ACTIONS ================= */
-
-  const handleDelete = async (id: string) => {
-    await adminProductApi.softDelete(id);
-    fetchProducts();
-  };
-
-  const handleHardDelete = async (id: string) => {
-    const confirmDelete = window.confirm(
-      "This will permanently delete this product. Continue?",
-    );
-
-    if (!confirmDelete) return;
-
-    await adminProductApi.hardDelete(id);
-    fetchProducts();
-  };
-
-  const handleToggleStatus = async (id: string, active: boolean) => {
-    await adminProductApi.setStatus(id, !active);
-    fetchProducts();
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const preview = URL.createObjectURL(file);
-
-    setPreviewImage(preview);
-
-    setForm((prev) => ({
-      ...prev,
-      thumbnailUrl: preview,
-    }));
-  };
-
-  /* ================= FILTER ================= */
-
-  const filteredProducts = products.filter((p) => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-
-    const matchBrand = filterBrand ? p.brandId === filterBrand : true;
-
-    const matchCategory = filterCategory
-      ? p.categoryId === filterCategory
-      : true;
-
-    const matchStatus =
-      filterStatus === ""
-        ? true
-        : filterStatus === "active"
-          ? p.isActive
-          : !p.isActive;
-
-    return matchSearch && matchBrand && matchCategory && matchStatus;
-  });
-
-  /* ================= ESC CLOSE ================= */
-
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpenModal(false);
-    };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setOpenDropdownId(null);
-    };
-
-    window.addEventListener("click", handleClickOutside);
-    return () => window.removeEventListener("click", handleClickOutside);
-  }, []);
+  const columns = useMemo<Column<Product>[]>(() => [
+    {
+      key: "thumbnail",
+      header: "Image",
+      render: (p) => (
+        <div className="relative group">
+          <img
+            src={p.thumbnail}
+            alt={p.name}
+            className="w-12 h-12 object-cover rounded-xl border border-zinc-100 group-hover:border-zinc-900 transition-all duration-300"
+          />
+        </div>
+      )
+    },
+    {
+      key: "name",
+      header: "Product Detail",
+      render: (p) => (
+        <div className="flex flex-col max-w-[220px]">
+          <span className="font-bold text-zinc-900 truncate text-[13px]">{p.name}</span>
+          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">{p.categoryName}</span>
+        </div>
+      )
+    },
+    {
+      key: "brandName",
+      header: "Brand",
+      render: (p) => <span className="px-2.5 py-1 bg-zinc-100 rounded-lg text-[10px] font-bold text-zinc-600 uppercase tracking-widest">{p.brandName}</span>
+    },
+    {
+      key: "isActive",
+      header: "Status",
+      render: (p) => (
+        <div 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggleStatus(p.id, p.isActive);
+          }}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest cursor-pointer transition-all ${
+            p.isActive 
+              ? "bg-green-50 text-green-700 hover:bg-green-100" 
+              : "bg-rose-50 text-rose-600 hover:bg-rose-100"
+          }`}
+        >
+          <div className={`w-1.5 h-1.5 rounded-full ${p.isActive ? "bg-green-500" : "bg-rose-500"}`} />
+          {p.isActive ? "Active" : "Inactive"}
+        </div>
+      )
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      render: (p) => (
+        <div className="flex items-center justify-end gap-1">
+          <button 
+            onClick={(e) => { e.stopPropagation(); navigate(`/admin/products/${p.id}`); }}
+            className="p-2 hover:bg-zinc-100 rounded-lg transition text-zinc-400 hover:text-zinc-900" 
+          >
+            <Eye size={16} />
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); handleEdit(p); }}
+            className="p-2 hover:bg-zinc-100 rounded-lg transition text-zinc-400 hover:text-zinc-900" 
+          >
+            <Edit2 size={16} />
+          </button>
+          
+          <div className="group relative">
+            <button className="p-2 hover:bg-zinc-100 rounded-lg transition text-zinc-400">
+              <MoreVertical size={16} />
+            </button>
+            <div className="absolute right-0 top-full mt-1 w-44 bg-white shadow-2xl rounded-xl border border-zinc-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+               {p.deletedAt ? (
+                 <button onClick={(e) => { e.stopPropagation(); }} className="w-full text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-green-600 hover:bg-green-50 flex items-center gap-2">
+                   <RotateCcw size={14} /> Restore
+                 </button>
+               ) : (
+                 <button onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }} className="w-full text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:bg-zinc-50 flex items-center gap-2">
+                   <Trash2 size={14} /> Soft Delete
+                 </button>
+               )}
+               <button onClick={(e) => { e.stopPropagation(); handleHardDelete(p.id); }} className="w-full text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-rose-600 hover:bg-rose-50 border-t border-zinc-100 flex items-center gap-2">
+                 <Trash2 size={14} /> Permanent Delete
+               </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+  ], [navigate, handleToggleStatus]);
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      {/* ================= HEADER ================= */}
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200 pb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">
-            Product Management
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Manage and control your product catalog
-          </p>
+          <h1 className="text-2xl font-bold text-zinc-900">Products Catalog</h1>
+          <p className="text-sm text-zinc-500 font-medium">Manage and monitor all your collection items</p>
         </div>
-
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-500">
-            Total: {products.length}
-          </span>
-
-          <button
-            onClick={() => setOpenModal(true)}
-            className="bg-black text-white px-5 py-2 rounded-lg hover:bg-gray-800 transition"
-          >
-            + Create Product
-          </button>
-        </div>
+        <Button
+          variant="primary"
+          onClick={() => {
+            setEditingId(null);
+            setForm({ name: "", description: "", categoryId: "", brandId: "", isActive: true, thumbnailUrl: "" });
+            setOpenModal(true);
+          }}
+          className="px-6 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest"
+        >
+          <Plus size={16} /> Add Product
+        </Button>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm mb-6 flex flex-wrap gap-4 items-end">
-        {/* Search */}
-        <div>
-          <label className="block text-xs mb-1 text-gray-500">Search</label>
-          <input
-            className="border border-gray-300 focus:ring-2 focus:ring-black focus:outline-none px-4 py-2 rounded-lg w-56 transition"
-            placeholder="Search products..."
+      <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-sm flex flex-wrap gap-4 items-center">
+        <div className="relative group flex-1 min-w-[240px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-zinc-900 transition-colors" size={16} />
+          <Input
+            placeholder="Search by name or slug..."
+            className="pl-10 pr-4 py-2.5 bg-zinc-50 border-zinc-100 focus:bg-white focus:border-zinc-300 transition-all rounded-lg text-sm font-medium"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        {/* Brand */}
-        <div>
-          <label className="block text-xs mb-1 text-gray-500">Brand</label>
-          <select
-            value={filterBrand}
-            onChange={(e) => setFilterBrand(e.target.value)}
-            className="border px-4 py-2 rounded-lg w-48"
-          >
+        <div className="flex items-center gap-2 bg-zinc-50 p-1.5 rounded-xl border border-zinc-200">
+          <select value={filterBrand} onChange={(e) => setFilterBrand(e.target.value)} className="bg-transparent border-none text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 focus:ring-0 cursor-pointer">
             <option value="">All Brands</option>
-            {brands.map((brand) => (
-              <option key={brand.id} value={brand.id}>
-                {brand.name}
-              </option>
+            {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+          <div className="w-px h-4 bg-zinc-200" />
+          <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="bg-transparent border-none text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 focus:ring-0 cursor-pointer max-w-[140px]">
+            <option value="">Categories</option>
+            {allCategoryOptions.map((cat) => (
+              <option key={cat.id} value={cat.id}>{"- ".repeat(cat.level)}{cat.name}</option>
             ))}
           </select>
-        </div>
-
-        {/* Category */}
-        <div>
-          <label className="block text-xs mb-1 text-gray-500">Category</label>
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="border px-4 py-2 rounded-lg w-56"
-          >
-            <option value="">All Categories</option>
-            {leafCategoryOptions.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {"_ ".repeat(cat.level)}
-                {cat.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Status */}
-        <div>
-          <label className="block text-xs mb-1 text-gray-500">Status</label>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="border px-4 py-2 rounded-lg w-40"
-          >
-            <option value="">All</option>
+          <div className="w-px h-4 bg-zinc-200" />
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="bg-transparent border-none text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 focus:ring-0 cursor-pointer">
+            <option value="">Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
         </div>
       </div>
 
-      {/* ================= TABLE ================= */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-visible">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100 text-gray-600 uppercase text-xs tracking-wider">
-            <tr>
-              <th className="text-left px-6 py-4">Image</th>
-              <th className="text-left px-6 py-4">Product</th>
-              <th className="text-left px-6 py-4">Brand</th>
-              <th className="text-left px-6 py-4">Category</th>
-              <th className="text-left px-6 py-4">Status</th>
-              <th className="text-left px-6 py-4">Edit</th>
-              <th className="text-right px-6 py-4">Actions</th>
-            </tr>
-          </thead>
+      <DataTable 
+        data={filteredProducts}
+        columns={columns}
+        loading={loading}
+        onRowClick={(p) => navigate(`/admin/products/${p.id}`)}
+        emptyMessage={
+          <div className="py-10 flex flex-col items-center gap-3">
+             <div className="text-zinc-300"><Search size={48} /></div>
+             <p className="text-zinc-500 font-medium">No results found for your criteria</p>
+             <Button variant="ghost" onClick={() => { setSearch(""); setFilterBrand(""); setFilterCategory(""); setFilterStatus(""); }} className="text-blue-600 text-[10px] font-bold uppercase tracking-widest underline">Clear all Filters</Button>
+          </div>
+        }
+      />
 
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={6} className="text-center py-10 text-gray-400">
-                  Loading products...
-                </td>
-              </tr>
-            ) : filteredProducts.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center py-10 text-gray-400">
-                  No products found
-                </td>
-              </tr>
-            ) : (
-              filteredProducts.map((p) => (
-                <tr
-                  key={p.id}
-                  onClick={() => navigate(`/admin/products/${p.id}`)}
-                  className="border-t hover:bg-gray-50 transition cursor-pointer"
-                >
-                  <td className="px-6 py-4">
-                    <img
-                      src={p.thumbnail}
-                      alt={p.name}
-                      className="w-14 h-14 object-cover rounded-lg border"
-                    />
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-gray-800">{p.name}</div>
-                    <div className="text-xs text-gray-400">{p.slug}</div>
-                  </td>
-
-                  <td className="px-6 py-4 text-gray-600">{p.brandName}</td>
-
-                  <td className="px-6 py-4 text-gray-600">{p.categoryName}</td>
-
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleStatus(p.id, p.isActive);
-                      }}
-                      className={`px-3 py-1 text-xs font-semibold rounded-full transition ${
-                        p.isActive
-                          ? "bg-green-100 text-green-700 hover:bg-green-200"
-                          : "bg-red-100 text-red-700 hover:bg-red-200"
-                      }`}
-                    >
-                      {p.isActive ? "Active" : "Inactive"}
-                    </button>
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(p);
-                      }}
-                      className="w-full text-left px-4 py-2 bg-amber-200 hover:bg-yellow-100 text-sm border border-amber-300 rounded-lg"
-                    >
-                      Edit
-                    </button>
-                  </td>
-
-                  <td className="px-6 py-4 relative">
-                    <div className="flex justify-end">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenDropdownId((prev) =>
-                            prev === p.id ? null : p.id,
-                          );
-                        }}
-                        className="px-3 py-1 rounded-lg hover:bg-gray-100 text-lg"
-                      >
-                        <MoreVertical size={18} />
-                      </button>
-                    </div>
-
-                    {openDropdownId === p.id && (
-                      <div
-                        onClick={(e) => e.stopPropagation()}
-                        className="absolute right-6 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden"
-                      >
-                        {/* Edit */}
-                        {/* <button
-                          onClick={() => {
-                            handleEdit(p);
-                            setOpenDropdownId(null);
-                          }}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
-                        >
-                          Edit
-                        </button> */}
-
-                        {/* Soft delete / Restore */}
-                        {p.deletedAt ? (
-                          <button
-                            onClick={() => {
-                              handleRestore(p.id);
-                              setOpenDropdownId(null);
-                            }}
-                            className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-green-600"
-                          >
-                            Restore
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              handleDelete(p.id);
-                              setOpenDropdownId(null);
-                            }}
-                            className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-red-600"
-                          >
-                            Soft Delete
-                          </button>
-                        )}
-
-                        {/* Hard delete */}
-                        <button
-                          onClick={() => {
-                            handleHardDelete(p.id);
-                            setOpenDropdownId(null);
-                          }}
-                          className="w-full text-left px-4 py-2 hover:bg-red-50 text-sm text-red-700 bg-red-100"
-                        >
-                          Hard Delete
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ================= MODAL ================= */}
       {openModal && (
-        <div
-          onClick={() => setOpenModal(false)}
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white w-full max-w-5xl rounded-2xl shadow-xl p-8 relative animate-[fadeIn_.2s_ease-out]"
-          >
-            <h2 className="text-xl font-semibold mb-6">
-              {editingId ? "Update Product" : "Create Product"}
-            </h2>
+        <div className="fixed inset-0 bg-zinc-900/40 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl p-8 relative overflow-y-auto max-h-[96vh] animate-in zoom-in-95 duration-200 border border-zinc-200 focus:outline-none">
+            <div className="flex justify-between items-center mb-8 border-b pb-4">
+                <h2 className="text-sm font-bold text-zinc-900 uppercase tracking-widest tracking-[0.15em]">
+                {editingId ? "Update Product" : "New Collection Item"}
+                </h2>
+                <button onClick={() => setOpenModal(false)} className="text-zinc-400 hover:text-zinc-900 transition-colors">
+                    <Trash2 size={20} className="rotate-45" />
+                </button>
+            </div>
 
-            {/* FORM GRID */}
-            <div className="grid grid-cols-2 gap-6">
-              {/* LEFT */}
-              <div className="space-y-4">
-                <input
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  placeholder="Product name"
-                  className="w-full border px-4 py-2 rounded-lg"
-                />
-
-                <select
-                  name="brandId"
-                  value={form.brandId}
-                  onChange={handleChange}
-                  className="w-full border px-4 py-2 rounded-lg"
-                >
-                  <option value="">Select brand</option>
-                  {brands.map((brand) => (
-                    <option key={brand.id} value={brand.id}>
-                      {brand.name}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  name="categoryId"
-                  value={form.categoryId}
-                  onChange={handleChange}
-                  className="w-full border px-4 py-2 rounded-lg"
-                >
-                  <option value="">Select category</option>
-                  {leafCategoryOptions.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {"_ ".repeat(cat.level)}
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-
-                <input
-                  type="url"
-                  name="thumbnailUrl"
-                  value={form.thumbnailUrl}
-                  onChange={handleChange}
-                  placeholder="Thumbnail URL"
-                  className="w-full border px-4 py-2 rounded-lg"
-                />
-              </div>
-
-              {/* RIGHT */}
-              {/* RIGHT - IMAGE PREVIEW */}
-              <div className="space-y-3">
-                <div className="text-sm font-medium text-gray-600">
-                  Image Preview
+            <div className="grid md:grid-cols-2 gap-10">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Product Title</label>
+                  <Input name="name" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} className="bg-zinc-50 border-zinc-100 rounded-xl py-6 font-medium" />
                 </div>
-
-                <div className="relative w-full h-64 rounded-xl border bg-gray-50 overflow-hidden flex items-center justify-center">
-                  {form.thumbnailUrl ? (
-                    <img
-                      src={form.thumbnailUrl}
-                      alt="Preview"
-                      className="w-full h-full object-contain transition duration-300 hover:scale-105"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <div className="text-gray-400 text-sm">
-                      No image selected
-                    </div>
-                  )}
-                </div>
-
-                {form.thumbnailUrl && (
-                  <div className="text-xs text-gray-400 break-all">
-                    {form.thumbnailUrl}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Global Class</label>
+                    <select value={form.categoryId} onChange={(e) => setForm({...form, categoryId: e.target.value})} className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3.5 text-[10px] font-bold uppercase tracking-widest focus:ring-2 focus:ring-zinc-900 cursor-pointer">
+                      <option value="">Category</option>
+                      {allCategoryOptions.map(cat => <option key={cat.id} value={cat.id}>{"- ".repeat(cat.level)}{cat.name}</option>)}
+                    </select>
                   </div>
-                )}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">House Label</label>
+                    <select value={form.brandId} onChange={(e) => setForm({...form, brandId: e.target.value})} className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3.5 text-[10px] font-bold uppercase tracking-widest focus:ring-2 focus:ring-zinc-900 cursor-pointer">
+                      <option value="">Brand</option>
+                      {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Asset Reference URL</label>
+                    <Input value={form.thumbnailUrl} onChange={(e) => setForm({...form, thumbnailUrl: e.target.value})} className="bg-zinc-50 border-zinc-100 rounded-xl py-6 text-[11px]" />
+                </div>
               </div>
-
-              {/* DESCRIPTION FULL WIDTH */}
-              <div className="col-span-2">
-                <textarea
-                  name="description"
-                  value={form.description}
-                  onChange={handleChange}
-                  placeholder="Product description..."
-                  rows={6}
-                  className="w-full border px-4 py-3 rounded-lg"
-                />
+              <div className="space-y-6">
+                 <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1 text-center">Visual Prototype</div>
+                 <div className="aspect-square bg-zinc-50 rounded-2xl border-2 border-dashed border-zinc-200 flex items-center justify-center overflow-hidden">
+                    {form.thumbnailUrl ? (
+                      <img src={form.thumbnailUrl} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <Plus size={32} className="text-zinc-200" />
+                    )}
+                 </div>
+              </div>
+              <div className="col-span-2 space-y-2">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Item Narrative</label>
+                <textarea value={form.description} onChange={(e) => setForm({...form, description: e.target.value})} rows={4} className="w-full bg-zinc-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-zinc-900 min-h-[120px]" />
               </div>
             </div>
 
-            {/* ACTIONS */}
-            <div className="flex justify-end gap-3 mt-8">
-              <button
-                onClick={() => setOpenModal(false)}
-                className="px-4 py-2 rounded-lg border"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleSubmit}
-                disabled={creating}
-                className="px-5 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-50"
-              >
-                {creating
-                  ? editingId
-                    ? "Updating..."
-                    : "Creating..."
-                  : editingId
-                    ? "Update"
-                    : "Create"}
-              </button>
+            <div className="flex justify-end gap-3 mt-10">
+               <Button variant="outline" onClick={() => setOpenModal(false)} className="px-8 text-zinc-400 text-[10px] font-bold uppercase tracking-widest">Abort</Button>
+               <Button variant="primary" onClick={handleSubmit} disabled={creating} className="px-10 text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-zinc-100">
+                 {creating ? "Saving..." : editingId ? "Update Item" : "Publish Item"}
+               </Button>
             </div>
           </div>
         </div>

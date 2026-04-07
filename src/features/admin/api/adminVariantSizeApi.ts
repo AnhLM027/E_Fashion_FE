@@ -1,30 +1,31 @@
 import axiosClient from "@/lib/axiosClient";
+import { API_ENDPOINTS } from "@/config/api.config";
 
 export const adminVariantSizeApi = {
   create: (data: any) =>
     axiosClient.post(
-      "/api/admin/product-variant-sizes",
+      API_ENDPOINTS.STAFF.VARIANT_SIZES,
       data
     ),
 
   getByVariant: (variantId: string) =>
     axiosClient.get(
-      `/api/admin/product-variant-sizes/variant/${variantId}`
+      `${API_ENDPOINTS.STAFF.VARIANT_SIZES}/variant/${variantId}`
     ),
 
   getById: (id: string) =>
     axiosClient.get(
-      `/api/admin/product-variant-sizes/${id}`
+      API_ENDPOINTS.STAFF.VARIANT_SIZE_ID(id)
     ),
 
   update: (id: string, data: any) =>
     axiosClient.put(
-      `/api/admin/product-variant-sizes/${id}`,
+      API_ENDPOINTS.STAFF.VARIANT_SIZE_ID(id),
       data
     ),
 
   delete: (id: string) =>
     axiosClient.delete(
-      `/api/admin/product-variant-sizes/${id}`
+      API_ENDPOINTS.STAFF.VARIANT_SIZE_ID(id)
     ),
 };

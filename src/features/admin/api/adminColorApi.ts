@@ -1,4 +1,5 @@
 import axiosClient from "@/lib/axiosClient";
+import { API_ENDPOINTS } from "@/config/api.config";
 
 export interface ColorRequestDTO {
   name: string;
@@ -8,17 +9,17 @@ export interface ColorRequestDTO {
 
 export const adminColorApi = {
   // GET all active colors
-  getAll: () => axiosClient.get("/api/admin/colors"),
+  getAll: () => axiosClient.get(API_ENDPOINTS.STAFF.COLORS),
 
   // CREATE color
   create: (data: ColorRequestDTO) =>
-    axiosClient.post("/api/admin/colors", data),
+    axiosClient.post(API_ENDPOINTS.STAFF.COLORS, data),
 
   // UPDATE color
   update: (id: string, data: ColorRequestDTO) =>
-    axiosClient.put(`/api/admin/colors/${id}`, data),
+    axiosClient.put(API_ENDPOINTS.STAFF.COLOR_ID(id), data),
 
   // DELETE color
   delete: (id: string) =>
-    axiosClient.delete(`/api/admin/colors/${id}`),
+    axiosClient.delete(API_ENDPOINTS.STAFF.COLOR_ID(id)),
 };

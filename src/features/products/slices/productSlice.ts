@@ -10,6 +10,8 @@ export interface ProductFilterParams {
   colorSlugs?: string[];
   minPrice?: number;
   maxPrice?: number;
+  page?: number;
+  size?: number;
 }
 
 interface ProductsState {
@@ -19,6 +21,9 @@ interface ProductsState {
   newArrivals: HomeProduct[];
   loading: boolean;
   error?: string;
+  totalPages: number;
+  totalElements: number;
+  currentPage: number;
 }
 
 const initialState: ProductsState = {
@@ -27,15 +32,17 @@ const initialState: ProductsState = {
   featured: [],
   newArrivals: [],
   loading: false,
+  totalPages: 0,
+  totalElements: 0,
+  currentPage: 0,
 };
 
 
 // 📦 All Products (Filter dynamic)
 export const fetchProducts = createAsyncThunk<
-  Product[],
+  any, // Adjust if you have a response type
   ProductFilterParams | undefined
 >("products/fetchProducts", async (params) => {
-  // console.log(params)
   return await productsApi.getAll(params);
 });
 
@@ -78,7 +85,14 @@ const productsSlice = createSlice({
         state.error = undefined;
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
-        state.items = action.payload;
+        if (action.payload.content) {
+          state.items = action.payload.content;
+          state.totalPages = action.payload.totalPages;
+          state.totalElements = action.payload.totalElements;
+          state.currentPage = action.payload.number;
+        } else {
+          state.items = action.payload; // Fallback
+        }
         state.loading = false;
       })
       .addCase(fetchProducts.rejected, (state, action) => {

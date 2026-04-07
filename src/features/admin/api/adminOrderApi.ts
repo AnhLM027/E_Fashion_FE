@@ -1,4 +1,5 @@
 import axiosClient from "@/lib/axiosClient";
+import { API_ENDPOINTS } from "@/config/api.config";
 
 export interface ChangeOrderStatusHistory {
   newStatus: string;
@@ -6,20 +7,20 @@ export interface ChangeOrderStatusHistory {
 }
 
 export const adminOrderApi = {
-  getAllOrders: () => axiosClient.get("/api/admin/orders"),
+  getAllOrders: () => axiosClient.get(API_ENDPOINTS.STAFF.ORDERS),
 
   getStatusHistory: (orderId: string) =>
-    axiosClient.get(`/api/admin/orders/${orderId}/status-history`),
+    axiosClient.get(API_ENDPOINTS.STAFF.ORDER_HISTORY(orderId)),
 
   getOrderDetail: (id: string) =>
-    axiosClient.get(`/api/admin/orders/${id}`).then(res => res),
+    axiosClient.get(API_ENDPOINTS.STAFF.ORDER_ID(id)).then(res => res),
 
   updateOrderStatus: (orderId: string, changeStatus: ChangeOrderStatusHistory) =>
-    axiosClient.put(`/api/admin/orders/${orderId}/status`, changeStatus),
+    axiosClient.put(API_ENDPOINTS.STAFF.ORDER_STATUS(orderId), changeStatus),
 
   exportOrders: async (query: string) => {
     return axiosClient.get(
-      `/api/admin/orders/export?${query}`,
+      `${API_ENDPOINTS.STAFF.EXPORT_ORDERS}?${query}`,
       { responseType: "blob" }
     );
   },

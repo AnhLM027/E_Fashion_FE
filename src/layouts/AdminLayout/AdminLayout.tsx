@@ -15,30 +15,35 @@ import {
   Palette,
   ChevronLeft,
   ChevronRight,
+  Bell,
 } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { ROUTES } from "@/config/routes";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
-
   const location = useLocation();
 
+  const isAdmin = user?.role === "ADMIN";
+
   const routeTitles: Record<string, string> = {
-    "/admin": "Dashboard",
-    "/admin/users": "Users",
-    "/admin/categories": "Categories",
-    "/admin/brands": "Brands",
-    "/admin/products": "Products",
-    "/admin/colors": "Colors",
-    "/admin/orders": "Orders",
-    "/admin/coupons": "Coupons",
-    "/admin/chats": "Chat",
-    "/admin/ratings": "Ratings",
+    [ROUTES.ADMIN_DASHBOARD]: "Dashboard",
+    [ROUTES.ADMIN_USERS]: "Users",
+    [ROUTES.ADMIN_CATEGORIES]: "Categories",
+    [ROUTES.ADMIN_BRANDS]: "Brands",
+    [ROUTES.ADMIN_PRODUCTS]: "Products",
+    [ROUTES.ADMIN_COLORS]: "Colors",
+    [ROUTES.ADMIN_ORDERS]: "Orders",
+    [ROUTES.ADMIN_COUPONS]: "Coupons",
+    [ROUTES.ADMIN_CHATS]: "Chat",
+    [ROUTES.ADMIN_REVIEWS]: "Ratings",
   };
 
-  const pageTitle = routeTitles[location.pathname] ?? "Admin Panel";
+  const pageTitle =
+    routeTitles[location.pathname] ??
+    (isAdmin ? "Admin Panel" : "Store Management");
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center ${
@@ -52,7 +57,7 @@ const AdminLayout = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/");
+    navigate(ROUTES.HOME);
   };
 
   const MenuItem = ({
@@ -97,46 +102,56 @@ const AdminLayout = () => {
           </button>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
-          <MenuItem to="/admin" icon={LayoutDashboard} label="Dashboard" end />
-          <MenuItem to="/admin/users" icon={Users} label="Users" />
-          <MenuItem
-            to="/admin/categories"
-            icon={FolderTree}
-            label="Categories"
-          />
-          <MenuItem to="/admin/brands" icon={Tag} label="Brands" />
-          <MenuItem to="/admin/products" icon={Package} label="Products" />
-          <MenuItem to="/admin/colors" icon={Palette} label="Colors" />
-          <MenuItem to="/admin/orders" icon={ShoppingCart} label="Orders" />
-          <MenuItem to="/admin/coupons" icon={Ticket} label="Coupons" />
-          <MenuItem to="/admin/chats" icon={MessageSquare} label="Chats" />
-          <MenuItem to="/admin/ratings" icon={Star} label="Ratings" />
+          {isAdmin && (
+            <div className="mb-6">
+              {!collapsed && (
+                <p className="px-4 mb-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  Management
+                </p>
+              )}
+              <MenuItem
+                to={ROUTES.ADMIN_DASHBOARD}
+                icon={LayoutDashboard}
+                label="Dashboard"
+                end
+              />
+              <MenuItem to={ROUTES.ADMIN_USERS} icon={Users} label="Users" />
+            </div>
+          )}
+
+          <div className="space-y-1">
+            {!collapsed && (
+              <p className="px-4 mb-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Operations
+              </p>
+            )}
+            <MenuItem
+              to={ROUTES.ADMIN_PRODUCTS}
+              icon={Package}
+              label="Products"
+            />
+            <MenuItem
+              to={ROUTES.ADMIN_ORDERS}
+              icon={ShoppingCart}
+              label="Orders"
+            />
+            <MenuItem
+              to={ROUTES.ADMIN_CATEGORIES}
+              icon={FolderTree}
+              label="Categories"
+            />
+            <MenuItem to={ROUTES.ADMIN_BRANDS} icon={Tag} label="Brands" />
+            <MenuItem to={ROUTES.ADMIN_COLORS} icon={Palette} label="Colors" />
+            <MenuItem to={ROUTES.ADMIN_COUPONS} icon={Ticket} label="Coupons" />
+            <MenuItem
+              to={ROUTES.ADMIN_CHATS}
+              icon={MessageSquare}
+              label="Chats"
+            />
+            <MenuItem to={ROUTES.ADMIN_REVIEWS} icon={Star} label="Ratings" />
+          </div>
         </nav>
-
-        {/* Bottom */}
-        <div className="px-3 py-6 border-t space-y-2">
-          <button
-            onClick={() => navigate("/")}
-            className={`flex items-center ${
-              collapsed ? "justify-center" : "gap-3"
-            } w-full px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition`}
-          >
-            <Store size={18} />
-            {!collapsed && "Back to Shop"}
-          </button>
-
-          <button
-            onClick={handleLogout}
-            className={`flex items-center ${
-              collapsed ? "justify-center" : "gap-3"
-            } w-full px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition`}
-          >
-            <LogOut size={18} />
-            {!collapsed && "Logout"}
-          </button>
-        </div>
       </aside>
 
       {/* MAIN AREA */}
@@ -145,7 +160,47 @@ const AdminLayout = () => {
         <header className="h-16 bg-white border-b px-6 flex items-center justify-between">
           <h1 className="text-lg font-semibold text-gray-800">{pageTitle}</h1>
 
-          <div className="text-sm text-gray-500">Welcome back</div>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate(ROUTES.HOME)}
+                className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider"
+                title="Back to Store"
+              >
+                <Store size={18} />
+                <span className="hidden sm:inline">Store</span>
+              </button>
+
+              <button className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-all relative">
+                <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white" />
+                <Bell size={18} />
+              </button>
+            </div>
+
+            <div className="w-px h-6 bg-gray-200" />
+
+            <div className="flex items-center gap-3 border-l pl-6">
+              <div className="flex flex-col items-end">
+                <span className="text-sm font-bold text-gray-900 leading-tight">
+                  {user?.fullName}
+                </span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                  {user?.role}
+                </span>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold border-2 border-gray-100 shadow-sm mr-2">
+                {user?.fullName?.charAt(0)}
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                title="Logout"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+          </div>
         </header>
 
         {/* CONTENT */}

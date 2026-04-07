@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { adminCategoryApi } from "@/features/admin/api/adminCategoryApi";
 import { ChevronDown, ChevronRight, Plus, Copy } from "lucide-react";
 import { type Category, useCategoryTree } from "@/hooks/useCategoryTree";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 export default function AdminCategoriesPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
   const { categories, allCategoryOptions, refresh } = useCategoryTree();
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -184,28 +187,30 @@ export default function AdminCategoriesPage() {
               </span>
             </div>
 
-            <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition">
-              <button
-                onClick={() => openCreateChildModal(category)}
-                className="p-2 rounded-lg bg-green-50 text-green-800 hover:bg-green-100 transition"
-              >
-                <Plus size={16} />
-              </button>
+            {isAdmin && (
+              <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition">
+                <button
+                  onClick={() => openCreateChildModal(category)}
+                  className="p-2 rounded-lg bg-green-50 text-green-800 hover:bg-green-100 transition"
+                >
+                  <Plus size={16} />
+                </button>
 
-              <button
-                onClick={() => handleEdit(category)}
-                className="px-3 py-1 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-medium"
-              >
-                Update
-              </button>
+                <button
+                  onClick={() => handleEdit(category)}
+                  className="px-3 py-1 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-medium"
+                >
+                  Update
+                </button>
 
-              <button
-                onClick={() => handleDelete(category.id)}
-                className="px-3 py-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100 text-xs font-medium"
-              >
-                Delete
-              </button>
-            </div>
+                <button
+                  onClick={() => handleDelete(category.id)}
+                  className="px-3 py-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100 text-xs font-medium"
+                >
+                  Delete
+                </button>
+              </div>
+            )}
           </div>
 
           {hasChildren &&
@@ -228,13 +233,15 @@ export default function AdminCategoriesPage() {
             </p>
           </div>
 
-          <button
-            onClick={openCreateModal}
-            className="flex items-center gap-2 bg-black text-white px-5 py-3 rounded-xl hover:bg-gray-800 transition shadow"
-          >
-            <Plus size={18} />
-            Add Category
-          </button>
+          {isAdmin && (
+            <button
+              onClick={openCreateModal}
+              className="flex items-center gap-2 bg-black text-white px-5 py-3 rounded-xl hover:bg-gray-800 transition shadow"
+            >
+              <Plus size={18} />
+              Add Category
+            </button>
+          )}
         </div>
 
         {/* SEARCH */}

@@ -1,4 +1,5 @@
 import axiosClient from "@/lib/axiosClient";
+import { API_ENDPOINTS } from "@/config/api.config";
 import type { Rating, CreateRatingRequest } from "../types/rating.types";
 
 interface RatingPage {
@@ -15,50 +16,45 @@ export interface RatingSummary {
 }
 
 export const ratingApi = {
+  // 📂 DISCOVERY (Public/Guest)
   async getProductRatings(
     productId: string,
     page = 0,
     size = 5
   ): Promise<RatingPage> {
-    const res = await axiosClient.get(
-      `/api/ratings/product/${productId}`,
+    return axiosClient.get(
+      API_ENDPOINTS.DISCOVERY.RATINGS_BY_PRODUCT(productId),
       {
         params: { page, size },
       }
     );
-
-    return res;
-  },
-
-  async getOrderRatings(orderId: string): Promise<Rating[]> {
-    const res = await axiosClient.get(
-      `/api/ratings/order/${orderId}`
-    );
-
-    return res;
   },
 
   async getProductRatingSummary(
     productId: string
   ): Promise<RatingSummary> {
-    const res = await axiosClient.get(
-      `/api/ratings/product/${productId}/summary`
+    return axiosClient.get(
+      `${API_ENDPOINTS.DISCOVERY.RATINGS_BY_PRODUCT(productId)}/summary`
     );
+  },
 
-    return res;
+  // 📂 CUSTOMER (Yêu cầu đăng nhập)
+  async getOrderRatings(orderId: string): Promise<Rating[]> {
+    return axiosClient.get(API_ENDPOINTS.CUSTOMER.RATINGS_ORDER(orderId));
   },
 
   async createRating(data: CreateRatingRequest): Promise<Rating> {
-    const res = await axiosClient.post(`/api/ratings`, data);
-    return res;
+    return axiosClient.post(API_ENDPOINTS.CUSTOMER.RATINGS, data);
   },
 
   async updateRating(id: string, data: CreateRatingRequest): Promise<Rating> {
-    const res = await axiosClient.put(`/api/ratings/${id}`, data);
-    return res;
+    return axiosClient.put(API_ENDPOINTS.CUSTOMER.RATING_ID(id), data);
   },
 
   async deleteRating(id: string) {
-    return axiosClient.delete(`/api/admin/ratings/${id}`);
+    return axiosClient.delete(API_ENDPOINTS.CUSTOMER.RATING_ID(id));
   },
 };
+
+// Vẫn giữ export này để tránh lỗi compile nếu nơi khác đang dùng (nhưng khuyên dùng ratingApi)
+export const discoveryRatingApi = ratingApi;

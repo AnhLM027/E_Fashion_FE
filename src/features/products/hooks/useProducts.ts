@@ -8,7 +8,7 @@ import {
   fetchNewArrivals,
 } from "../slices/productSlice";
 
-export function useProducts(filters?: ProductFilterParams) {
+export function useProducts(filters?: ProductFilterParams, page = 0) {
   const dispatch = useAppDispatch();
 
   const {
@@ -17,6 +17,8 @@ export function useProducts(filters?: ProductFilterParams) {
     featured,
     newArrivals,
     loading,
+    totalPages,
+    totalElements,
   } = useAppSelector((state) => state.products);
 
   // tránh infinite re-render do object reference
@@ -32,42 +34,18 @@ export function useProducts(filters?: ProductFilterParams) {
     const isCategoryPage = pathname.includes("/category/");
     const isSearchPage = search.includes("q=");
 
-    // 🔥 Nếu là category page mà categorySlugs chưa sẵn sàng → đợi
-    if (
-      isCategoryPage &&
-      (!stableFilters?.categorySlugs ||
-        stableFilters.categorySlugs[0] === undefined)
-    ) {
-      return;
-    }
+    if (isCategoryPage && (!stableFilters?.categorySlugs || !stableFilters.categorySlugs[0])) return;
+    if (isSearchPage && (!stableFilters?.keyword || !stableFilters.keyword.trim())) return;
 
-    // 🔥 Nếu là search page mà keyword chưa có → đợi
-    if (
-      isSearchPage &&
-      (!stableFilters?.keyword ||
-        stableFilters.keyword.trim() === "")
-    ) {
-      return;
-    }
+    // 🔥 Có filter hoặc ít nhất có phân trang
+    dispatch(fetchProducts({ ...stableFilters, page }));
 
-    // 🔥 Có filter thật sự
-    if (
-      stableFilters &&
-      Object.values(stableFilters).some(
-        (v) =>
-          v !== undefined &&
-          v !== null &&
-          !(Array.isArray(v) && v.length === 0)
-      )
-    ) {
-      dispatch(fetchProducts(stableFilters));
-    } else {
-      dispatch(fetchProducts(undefined));
+    if (!stableFilters) {
       dispatch(fetchBestSellers());
       dispatch(fetchFeatured());
       dispatch(fetchNewArrivals());
     }
-  }, [dispatch, stableFilters]);
+  }, [dispatch, stableFilters, page]);
 
   return {
     products: items,
@@ -75,5 +53,7 @@ export function useProducts(filters?: ProductFilterParams) {
     featured,
     newArrivals,
     loading,
+    totalPages,
+    totalElements,
   };
 }

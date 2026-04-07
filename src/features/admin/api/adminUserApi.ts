@@ -1,4 +1,5 @@
 import axiosClient from "@/lib/axiosClient";
+import { API_ENDPOINTS } from "@/config/api.config";
 
 export interface AdminUser {
   id: string;
@@ -7,7 +8,7 @@ export interface AdminUser {
   phone: string;
   gender: "MALE" | "FEMALE" | "OTHER";
   avatarUrl?: string;
-  role: "ADMIN" | "CUSTOMER";
+  role: "ADMIN" | "STAFF" | "CUSTOMER";
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -24,7 +25,7 @@ export interface AdminUserUpdateRequest {
   fullName?: string;
   phone?: string;
   gender?: "MALE" | "FEMALE" | "OTHER";
-  role?: "ADMIN" | "CUSTOMER";
+  role?: "ADMIN" | "STAFF" | "CUSTOMER";
   isActive?: boolean;
 }
 
@@ -37,12 +38,12 @@ export const adminUserApi = {
     page?: number;
     size?: number;
   }): Promise<AdminUserPageResponse> => {
-    return axiosClient.get("/api/admin/users", { params });
+    return axiosClient.get(API_ENDPOINTS.ADMIN.USERS, { params });
   },
 
   // GET DETAIL
   getDetail: async (id: string): Promise<AdminUser> => {
-    return axiosClient.get(`/api/admin/users/${id}`);
+    return axiosClient.get(API_ENDPOINTS.ADMIN.USER_ID(id));
   },
 
   // UPDATE
@@ -50,16 +51,16 @@ export const adminUserApi = {
     id: string,
     data: AdminUserUpdateRequest,
   ): Promise<AdminUser> => {
-    return axiosClient.put(`/api/admin/users/${id}`, data);
+    return axiosClient.put(API_ENDPOINTS.ADMIN.USER_ID(id), data);
   },
 
   // ACTIVATE
   activate: async (id: string): Promise<void> => {
-    return axiosClient.put(`/api/admin/users/${id}/activate`);
+    return axiosClient.put(API_ENDPOINTS.ADMIN.ACTIVATE_USER(id));
   },
 
   // DEACTIVATE
   deactivate: async (id: string): Promise<void> => {
-    return axiosClient.put(`/api/admin/users/${id}/deactivate`);
+    return axiosClient.put(API_ENDPOINTS.ADMIN.DEACTIVATE_USER(id));
   },
 };

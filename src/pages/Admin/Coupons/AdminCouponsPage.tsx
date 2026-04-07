@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2, X } from "lucide-react";
 import { couponApi } from "@/features/coupon/api/coupon.api";
 import type {
   CouponResponseDTO,
@@ -12,8 +12,11 @@ import {
   parseFormattedNumber,
   formatFullDateTime,
 } from "@/utils/format";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 export default function AdminCouponPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
   const [coupons, setCoupons] = useState<CouponResponseDTO[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,31 +58,31 @@ export default function AdminCouponPage() {
     const newErrors: Record<string, string> = {};
 
     if (!form.code.trim()) {
-      newErrors.code = "Vui lòng nhập mã coupon";
+      newErrors.code = "Please enter coupon code";
     }
 
     if (form.discountValue <= 0) {
-      newErrors.discountValue = "Giá trị giảm phải lớn hơn 0";
+      newErrors.discountValue = "Discount value must be greater than 0";
     }
 
     if (form.discountType === "PERCENTAGE" && form.discountValue > 100) {
-      newErrors.discountValue = "Giảm giá phần trăm không được vượt quá 100%";
+      newErrors.discountValue = "Percentage discount cannot exceed 100%";
     }
 
     if (form.minOrderValue < 0) {
-      newErrors.minOrderValue = "Giá trị tối thiểu không hợp lệ";
+      newErrors.minOrderValue = "Invalid minimum order value";
     }
 
     if (form.usageLimit < 0) {
-      newErrors.usageLimit = "Số lượt sử dụng không hợp lệ";
+      newErrors.usageLimit = "Invalid usage limit";
     }
 
     if (!form.startDate) {
-      newErrors.startDate = "Vui lòng chọn ngày bắt đầu";
+      newErrors.startDate = "Please select start date";
     }
 
     if (!form.endDate) {
-      newErrors.endDate = "Vui lòng chọn ngày kết thúc";
+      newErrors.endDate = "Please select end date";
     }
 
     if (
@@ -87,7 +90,7 @@ export default function AdminCouponPage() {
       form.endDate &&
       new Date(form.endDate) <= new Date(form.startDate)
     ) {
-      newErrors.endDate = "Ngày kết thúc phải lớn hơn ngày bắt đầu";
+      newErrors.endDate = "End date must be after start date";
     }
 
     setErrors(newErrors);
@@ -105,7 +108,7 @@ export default function AdminCouponPage() {
   /* ================= ACTIONS ================= */
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Bạn chắc chắn muốn xóa coupon này?")) return;
+    if (!confirm("Are you sure you want to delete this coupon?")) return;
     await couponApi.delete(id);
     fetchData();
   };
@@ -163,89 +166,95 @@ export default function AdminCouponPage() {
   /* ================= UI ================= */
 
   return (
-    <div className="p-8 space-y-8 bg-neutral-50 min-h-screen">
+    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       {/* HEADER */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Coupon Management
-          </h1>
-          <p className="text-sm text-neutral-500 mt-1">
-            Quản lý mã giảm giá cho hệ thống
-          </p>
+          <h1 className="text-2xl font-bold text-zinc-900">Coupons</h1>
+          <p className="text-sm text-zinc-500">Manage promotional discount codes</p>
         </div>
 
-        <button
-          onClick={() => setOpen(true)}
-          className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-2xl hover:opacity-90 transition"
-        >
-          <Plus size={16} />
-          Thêm coupon
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setOpen(true)}
+            className="flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-zinc-800 transition"
+          >
+            <Plus size={14} />
+            Create New Coupon
+          </button>
+        )}
       </div>
 
       {/* SEARCH */}
       <div className="relative max-w-md">
         <Search
-          size={16}
-          className="absolute left-4 top-3.5 text-neutral-400"
+          size={14}
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"
         />
         <input
-          placeholder="Tìm theo mã coupon..."
-          className="w-full pl-11 pr-4 py-3 rounded-2xl border border-neutral-200 bg-white focus:outline-none focus:ring-2 focus:ring-black"
+          placeholder="Search by coupon code..."
+          className="w-full pl-10 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all"
           value={searchCode}
           onChange={(e) => setSearchCode(e.target.value)}
         />
       </div>
 
       {/* LIST */}
-      {loading && <p>Đang tải...</p>}
+      {loading && <p className="text-zinc-500 text-sm italic">Synchronizing coupons...</p>}
 
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredCoupons.map((c) => (
           <div
             key={c.id}
-            className="bg-white rounded-3xl p-6 shadow-sm border border-neutral-200 hover:shadow-md transition"
+            className="bg-white rounded-xl p-5 shadow-sm border border-zinc-200 hover:shadow-md transition-shadow group"
           >
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xl font-semibold">{c.code}</p>
+                <p className="text-lg font-bold text-zinc-900 tracking-tight">{c.code}</p>
 
-                <span
-                  className={`inline-block mt-2 text-xs px-3 py-1 rounded-full ${
+                <div
+                  className={`inline-flex items-center gap-1.5 mt-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                     c.isActive
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-200 text-gray-600"
+                      ? "bg-green-50 text-green-700"
+                      : "bg-zinc-100 text-zinc-500"
                   }`}
                 >
+                  <div className={`w-1 h-1 rounded-full ${c.isActive ? "bg-green-500" : "bg-zinc-400"}`} />
                   {c.isActive ? "Active" : "Inactive"}
-                </span>
+                </div>
               </div>
 
-              <button
-                onClick={() => handleDelete(c.id)}
-                className="text-neutral-400 hover:text-red-500 transition"
-              >
-                <Trash2 size={18} />
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => handleDelete(c.id)}
+                  className="p-2 text-zinc-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
             </div>
 
-            <div className="mt-4 space-y-1 text-sm text-neutral-600">
-              <p>
-                Giảm:{" "}
-                <span className="font-medium text-black">
+            <div className="mt-5 space-y-3">
+              <div className="flex justify-between text-[13px]">
+                <span className="text-zinc-500">Discount Value</span>
+                <span className="font-bold text-zinc-900">
                   {c.discountType === "PERCENTAGE"
                     ? `${c.discountValue}%`
                     : formatCurrency(c.discountValue)}
                 </span>
-              </p>
+              </div>
 
-              <p>Min order: {formatCurrency(c.minOrderValue)}</p>
+              <div className="flex justify-between text-[13px]">
+                <span className="text-zinc-500">Min Order Requirement</span>
+                <span className="font-bold text-zinc-900">{formatCurrency(c.minOrderValue)}</span>
+              </div>
 
-              <p>
-                Usage:{" "}
-                {c.usageLimit === 0 ? "Hết lượt sử dụng" : `${c.usageLimit} lượt`}
-              </p>
+              <div className="flex justify-between text-[13px]">
+                <span className="text-zinc-500">Availability</span>
+                <span className={`font-bold ${c.usageLimit === 0 ? "text-rose-600" : "text-zinc-900"}`}>
+                  {c.usageLimit === 0 ? "Limit Reached" : `${c.usageLimit} Units Left`}
+                </span>
+              </div>
 
               {(() => {
                 const { percent, status } = getTimeProgress(
@@ -254,39 +263,39 @@ export default function AdminCouponPage() {
                 );
 
                 return (
-                  <div className="mt-4 space-y-2">
-                    {/* Date text */}
-                    <p className="text-xs text-neutral-400">
-                      {formatFullDateTime(c.startDate)} <br />→{" "}
-                      {formatFullDateTime(c.endDate)}
-                    </p>
+                  <div className="mt-5 space-y-2 pt-4 border-t border-zinc-100">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-zinc-400 uppercase tracking-widest leading-none">
+                      <span>Timeline</span>
+                    </div>
 
-                    {/* Progress bar */}
-                    <div className="w-full h-2 bg-neutral-200 rounded-full overflow-hidden">
+                    <div className="text-[11px] text-zinc-500">
+                      {formatFullDateTime(c.startDate)} - {formatFullDateTime(c.endDate)}
+                    </div>
+
+                    <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden border border-zinc-200">
                       <div
-                        className={`h-full transition-all duration-500 ${
+                        className={`h-full transition-all duration-700 ${
                           status === "expired"
-                            ? "bg-red-500"
+                            ? "bg-rose-500"
                             : status === "active"
-                              ? "bg-black"
-                              : "bg-blue-400"
+                              ? "bg-zinc-900"
+                              : "bg-blue-500"
                         }`}
                         style={{ width: `${percent}%` }}
                       />
                     </div>
 
-                    {/* Status text */}
-                    <div className="text-xs font-medium">
+                    <div className="text-[10px] font-bold uppercase tracking-widest pt-1">
                       {status === "upcoming" && (
-                        <span className="text-blue-500">Chưa bắt đầu</span>
+                        <span className="text-blue-600">Upcoming Campaign</span>
                       )}
                       {status === "active" && (
-                        <span className="text-black">
-                          Đang diễn ra • {percent.toFixed(0)}%
+                        <span className="text-zinc-900">
+                          Active Campaign • {percent.toFixed(0)}% Complete
                         </span>
                       )}
                       {status === "expired" && (
-                        <span className="text-red-500">Đã hết hạn</span>
+                        <span className="text-rose-600">Campaign Expired</span>
                       )}
                     </div>
                   </div>
@@ -295,232 +304,167 @@ export default function AdminCouponPage() {
             </div>
           </div>
         ))}
+
+        {filteredCoupons.length === 0 && (
+          <div className="col-span-full py-12 text-center text-zinc-400 italic bg-white rounded-xl border border-dashed border-zinc-200">
+            No active coupons found matching your search criteria
+          </div>
+        )}
       </div>
 
       {/* ================= MODAL ================= */}
 
       {open && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl w-[700px] p-8 shadow-2xl space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold">Tạo Coupon Mới</h3>
+        <div className="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-zinc-200 flex justify-between items-center bg-zinc-50/50">
+              <h3 className="text-lg font-bold text-zinc-900">Create New Coupon</h3>
 
               <button
                 onClick={() => setOpen(false)}
-                className="text-neutral-400 hover:text-black"
+                className="p-1.5 hover:bg-zinc-200 rounded-lg transition-colors text-zinc-400 hover:text-zinc-900"
               >
-                ✕
+                <X size={18} />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              {/* CODE */}
-              <div>
-                <label className="text-sm font-medium">Mã coupon</label>
-                <input
-                  className="w-full border border-neutral-200 rounded-xl px-3 py-2 mt-1 focus:ring-2 focus:ring-black"
-                  value={form.code}
-                  onChange={(e) =>
-                    setForm({ ...form, code: e.target.value.toUpperCase() })
-                  }
-                />
-                {errors.code && (
-                  <p className="text-xs text-red-500 mt-1">{errors.code}</p>
-                )}
-              </div>
-
-              {/* TYPE */}
-              <div>
-                <label className="text-sm font-medium">Loại giảm giá</label>
-                <select
-                  className="w-full border border-neutral-200 rounded-xl px-3 py-2 mt-1 focus:ring-2 focus:ring-black"
-                  value={form.discountType}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      discountType: e.target.value as "PERCENTAGE" | "FIXED",
-                    })
-                  }
-                >
-                  <option value="PERCENTAGE">Phần trăm (%)</option>
-                  <option value="FIXED">Số tiền cố định</option>
-                </select>
-              </div>
-
-              {/* VALUE */}
-              <div>
-                <label className="text-sm font-medium">Giá trị giảm</label>
-
-                <input
-                  type="text"
-                  className={`w-full border rounded-xl px-3 py-2 mt-1 transition
-      ${
-        errors.discountValue
-          ? "border-red-500 focus:ring-red-500"
-          : "border-neutral-200 focus:ring-black"
-      }
-    `}
-                  value={formatNumber(form.discountValue, "vi-VN")}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      discountValue: parseFormattedNumber(e.target.value),
-                    })
-                  }
-                />
-
-                {/* HIỂN THỊ PREVIEW */}
-                {form.discountValue > 0 && !errors.discountValue && (
-                  <p className="text-xs text-neutral-500 mt-1">
-                    {form.discountType === "FIXED"
-                      ? formatCurrency(form.discountValue)
-                      : `${form.discountValue}%`}
-                  </p>
-                )}
-
-                {/* ERROR */}
-                {errors.discountValue && (
-                  <p className="text-xs text-red-500 mt-1 font-medium">
-                    {errors.discountValue}
-                  </p>
-                )}
-              </div>
-
-              {/* MIN ORDER */}
-              <div>
-                <label className="text-sm font-medium">Đơn tối thiểu</label>
-                <input
-                  type="text"
-                  className="w-full border border-neutral-200 rounded-xl px-3 py-2 mt-1"
-                  value={formatNumber(form.minOrderValue, "vi-VN")}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      minOrderValue: parseFormattedNumber(e.target.value),
-                    })
-                  }
-                />
-              </div>
-
-              {/* USAGE */}
-              <div>
-                <label className="text-sm font-medium">Số lượt sử dụng</label>
-                <input
-                  type="number"
-                  min={0}
-                  className={`w-full border rounded-xl px-3 py-2 mt-1 transition
-    ${
-      errors.usageLimit
-        ? "border-red-500 focus:ring-red-500"
-        : "border-neutral-200 focus:ring-black"
-    }
-  `}
-                  value={form.usageLimit}
-                  onChange={(e) => {
-                    const value = Number(e.target.value);
-
-                    if (value < 0) return; // 🚀 chặn luôn không cho âm
-
-                    setForm({
-                      ...form,
-                      usageLimit: value,
-                    });
-                  }}
-                />
-
-                {errors.usageLimit && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {errors.usageLimit}
-                  </p>
-                )}
-              </div>
-
-              {/* ACTIVE */}
-              <div className="flex items-center justify-between border border-neutral-200 rounded-xl px-4 py-3 mt-6">
-                <span className="text-sm font-medium">Kích hoạt</span>
-
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, isActive: !form.isActive })}
-                  className={`w-12 h-6 rounded-full relative transition ${
-                    form.isActive ? "bg-black" : "bg-gray-300"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition ${
-                      form.isActive ? "translate-x-6" : ""
-                    }`}
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1.5 block">Coupon code</label>
+                  <input
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all uppercase font-bold tracking-widest"
+                    value={form.code}
+                    onChange={(e) =>
+                      setForm({ ...form, code: e.target.value.toUpperCase() })
+                    }
                   />
-                </button>
+                  {errors.code && (
+                    <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.code}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1.5 block">Discount type</label>
+                  <select
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all cursor-pointer"
+                    value={form.discountType}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        discountType: e.target.value as "PERCENTAGE" | "FIXED",
+                      })
+                    }
+                  >
+                    <option value="PERCENTAGE">Percentage (%)</option>
+                    <option value="FIXED">Fixed Amount (₫)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1.5 block">Discount value</label>
+                  <input
+                    type="text"
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all"
+                    value={formatNumber(form.discountValue, "vi-VN")}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        discountValue: parseFormattedNumber(e.target.value),
+                      })
+                    }
+                  />
+                  {errors.discountValue && (
+                    <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.discountValue}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1.5 block">Min order value</label>
+                  <input
+                    type="text"
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all"
+                    value={formatNumber(form.minOrderValue, "vi-VN")}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        minOrderValue: parseFormattedNumber(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1.5 block">Usage limit</label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all"
+                    value={form.usageLimit}
+                    onChange={(e) => setForm({ ...form, usageLimit: Number(e.target.value) })}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between border border-zinc-200 rounded-lg px-4 py-2 mt-auto">
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Status Active</span>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, isActive: !form.isActive })}
+                      className={`w-10 h-5 rounded-full relative transition-colors ${
+                        form.isActive ? "bg-green-500" : "bg-zinc-300"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${
+                          form.isActive ? "translate-x-5" : ""
+                        }`}
+                      />
+                    </button>
+                  </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1.5 block">Start date</label>
+                  <input
+                    type="datetime-local"
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all"
+                    value={form.startDate}
+                    onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                  />
+                  {errors.startDate && (
+                    <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.startDate}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1.5 block">End date</label>
+                  <input
+                    type="datetime-local"
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all"
+                    value={form.endDate}
+                    onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                  />
+                  {errors.endDate && (
+                    <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.endDate}</p>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* DATE */}
-            <div className="grid grid-cols-2 gap-6">
-              {/* START DATE */}
-              <div>
-                <label className="text-sm font-medium">Ngày bắt đầu</label>
-                <input
-                  type="datetime-local"
-                  className={`w-full border rounded-xl px-3 py-2 mt-1 transition
-      ${
-        errors.startDate
-          ? "border-red-500 focus:ring-red-500"
-          : "border-neutral-200 focus:ring-black"
-      }
-    `}
-                  value={form.startDate}
-                  onChange={(e) =>
-                    setForm({ ...form, startDate: e.target.value })
-                  }
-                />
-                {errors.startDate && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {errors.startDate}
-                  </p>
-                )}
-              </div>
-
-              {/* END DATE */}
-              <div>
-                <label className="text-sm font-medium">Ngày kết thúc</label>
-                <input
-                  type="datetime-local"
-                  min={form.startDate}
-                  className={`w-full border rounded-xl px-3 py-2 mt-1 transition
-      ${
-        errors.endDate
-          ? "border-red-500 focus:ring-red-500"
-          : "border-neutral-200 focus:ring-black"
-      }
-    `}
-                  value={form.endDate}
-                  onChange={(e) =>
-                    setForm({ ...form, endDate: e.target.value })
-                  }
-                />
-                {errors.endDate && (
-                  <p className="text-xs text-red-500 mt-1 font-medium">
-                    {errors.endDate}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t">
+            <div className="px-6 py-4 border-t border-zinc-200 flex justify-end gap-3 bg-zinc-50/50">
               <button
                 onClick={() => setOpen(false)}
-                className="px-5 py-2 rounded-xl border border-neutral-300"
+                className="px-4 py-2 rounded-lg text-xs font-bold text-zinc-600 hover:bg-zinc-200 transition-colors uppercase tracking-widest"
               >
-                Hủy
+                Cancel
               </button>
-
               <button
                 onClick={handleCreate}
                 disabled={!isValid}
-                className="px-5 py-2 rounded-xl bg-black text-white disabled:opacity-40"
+                className="px-6 py-2 rounded-lg bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 disabled:opacity-40 transition-all uppercase tracking-widest"
               >
-                Tạo coupon
+                Create Coupon
               </button>
             </div>
           </div>

@@ -68,7 +68,7 @@ export const calculateDiscount = (originalPrice: number, salePrice: number): num
  */
 export const formatNumber = (
     value: number,
-    locale = 'en-US'
+    locale = 'vi-VN'
 ): string => {
     if (!value && value !== 0) return '';
     return new Intl.NumberFormat(locale, {

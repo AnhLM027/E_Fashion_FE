@@ -7,6 +7,7 @@ import {
   Phone,
   MapPin,
 } from "lucide-react";
+import { ROUTES } from "@/config/routes";
 
 export default function Footer() {
   return (
@@ -46,22 +47,22 @@ export default function Footer() {
 
             <ul className="mt-8 space-y-4 text-sm">
               <li>
-                <Link to="/products" className="hover:text-white transition">
+                <Link to={ROUTES.PRODUCTS} className="hover:text-white transition">
                   Tất cả sản phẩm
                 </Link>
               </li>
               <li>
-                <Link to="/products/nam" className="hover:text-white transition">
+                <Link to={ROUTES.productsByCategory("nam")} className="hover:text-white transition">
                   Nam
                 </Link>
               </li>
               <li>
-                <Link to="/products/nu" className="hover:text-white transition">
+                <Link to={ROUTES.productsByCategory("nu")} className="hover:text-white transition">
                   Nữ
                 </Link>
               </li>
               <li>
-                <Link to="/my-coupons" className="hover:text-white transition">
+                <Link to={ROUTES.MY_COUPONS} className="hover:text-white transition">
                   Khuyến mãi
                 </Link>
               </li>

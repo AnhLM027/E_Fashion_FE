@@ -1,4 +1,5 @@
 import axiosClient from "@/lib/axiosClient";
+import { API_ENDPOINTS } from "@/config/api.config";
 import { type ProductResponseDTO } from "../types/admin.type";
 
 export interface AdminChatSession {
@@ -28,7 +29,7 @@ export interface AdminChatMessage {
 export const adminChatApi = {
     // Lấy danh sách session ACTIVE
     getActiveSessions: async (): Promise<AdminChatSession[]> => {
-        return axiosClient.get("/api/admin/chat/sessions");
+        return axiosClient.get(API_ENDPOINTS.STAFF.CHAT_SESSIONS);
     },
 
     // Lấy message của 1 session
@@ -36,14 +37,14 @@ export const adminChatApi = {
         sessionId: string
     ): Promise<AdminChatMessage[]> => {
         return axiosClient.get(
-            `/api/admin/chat/sessions/${sessionId}/messages`
+            API_ENDPOINTS.STAFF.CHAT_MESSAGES(sessionId)
         );
     },
 
     // Đóng session
     closeSession: async (sessionId: string): Promise<void> => {
         return axiosClient.post(
-            `/api/admin/chat/sessions/${sessionId}/close`
+            API_ENDPOINTS.STAFF.CHAT_CLOSE(sessionId)
         );
     },
 
@@ -54,7 +55,7 @@ export const adminChatApi = {
         console.log(file)
 
         const res = await axiosClient.post<string>(
-            "/api/admin/chat/upload",
+            API_ENDPOINTS.STAFF.CHAT_UPLOAD,
             formData,
             {
                 headers: { "Content-Type": "multipart/form-data" },
@@ -66,7 +67,7 @@ export const adminChatApi = {
 
     markAsRead: async (sessionId: string): Promise<void> => {
         return axiosClient.post(
-            `/api/admin/chat/sessions/${sessionId}/read`
+            API_ENDPOINTS.STAFF.CHAT_READ(sessionId)
         );
     },
 
@@ -74,7 +75,7 @@ export const adminChatApi = {
         keyword: string
     ): Promise<ProductResponseDTO[]> => {
         return axiosClient.get(
-            "/api/admin/products/search",
+            API_ENDPOINTS.STAFF.PRODUCTS_SEARCH,
             {
                 params: { keyword },
             }

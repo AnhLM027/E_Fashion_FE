@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Sparkles, Shirt, Users } from "lucide-react";
+import { ROUTES } from "@/config/routes";
 
 export default function AboutPage() {
   return (
@@ -25,7 +26,7 @@ export default function AboutPage() {
             </p>
 
             <Link
-              to="/products"
+              to={ROUTES.PRODUCTS}
               className="inline-block bg-white text-black px-6 py-3 rounded-lg text-sm font-medium hover:bg-zinc-200 transition"
             >
               Khám phá bộ sưu tập

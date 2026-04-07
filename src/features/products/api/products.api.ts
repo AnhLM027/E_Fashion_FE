@@ -5,8 +5,8 @@ import type { HomeProduct } from "../types/homeProduct.type";
 import { API_ENDPOINTS } from "../../../config/api.config";
 import type { ProductVariant } from "../types/productVariant.type";
 
+// 📂 DISCOVERY (Public/Guest)
 export const productsApi = {
-  // ✅ Filter đúng với backend
   getAll: async (params?: {
     keyword?: string;
     categorySlugs?: string[];
@@ -16,66 +16,63 @@ export const productsApi = {
     maxPrice?: number;
   }): Promise<Product[]> => {
     if (params?.keyword) {
-      console.log(params.keyword)
-      return await axiosClient.get(
-        `${API_ENDPOINTS.PRODUCTS.LIST}/search`,
-        {
-          params: { keyword: params.keyword },
-        }
-      );
+      return await axiosClient.get(API_ENDPOINTS.DISCOVERY.PRODUCTS.SEARCH, {
+        params: { keyword: params.keyword },
+      });
     }
 
-    console.log(params?.categorySlugs)
-    return await axiosClient.get(API_ENDPOINTS.PRODUCTS.LIST, {
+    return await axiosClient.get(API_ENDPOINTS.DISCOVERY.PRODUCTS.LIST, {
       params,
     });
   },
 
-  // ✅ GET /api/products/{id}
   getById: async (id: string): Promise<Product> => {
-    return await axiosClient.get(
-      API_ENDPOINTS.PRODUCTS.DETAIL(id)
-    );
+    return await axiosClient.get(API_ENDPOINTS.DISCOVERY.PRODUCTS.DETAIL(id));
   },
 
-  // ✅ GET /api/products/slug/{slug}
   getBySlug: async (slug: string): Promise<Product> => {
-    return await axiosClient.get(
-      API_ENDPOINTS.PRODUCTS.DETAIL_BY_SLUG(slug)
-    );
+    return await axiosClient.get(API_ENDPOINTS.DISCOVERY.PRODUCTS.DETAIL_BY_SLUG(slug));
   },
 
-  // variants
-  getVariantsByProductId: async (
-    productId: string
-  ): Promise<ProductVariant[]> => {
-    return axiosClient.get(
-      `/api/product-variants/product/${productId}`
-    );
+  getVariantsByProductId: async (productId: string): Promise<ProductVariant[]> => {
+    return axiosClient.get(API_ENDPOINTS.DISCOVERY.PRODUCTS.VARIANTS(productId));
   },
 
-  // images
   getImages: (productId: string): Promise<ProductImage[]> =>
-    axiosClient.get(
-      API_ENDPOINTS.PRODUCTS.GET_IMAGES(productId)
-    ),
+    axiosClient.get(API_ENDPOINTS.DISCOVERY.PRODUCTS.IMAGES(productId)),
 
-  // ❗ Nếu backend chưa có featured API thì cần tạo riêng
   getBestSellers: async (): Promise<HomeProduct[]> => {
-    return axiosClient.get(
-      API_ENDPOINTS.PRODUCTS.FEATURED("bestsellers")
-    );
+    return axiosClient.get(API_ENDPOINTS.DISCOVERY.PRODUCTS.FEATURED("bestsellers"));
   },
 
   getSale: async (): Promise<HomeProduct[]> => {
-    return axiosClient.get(
-      API_ENDPOINTS.PRODUCTS.FEATURED("sale")
-    );
+    return axiosClient.get(API_ENDPOINTS.DISCOVERY.PRODUCTS.FEATURED("sale"));
   },
 
   getNewArrivals: async (): Promise<HomeProduct[]> => {
-    return axiosClient.get(
-      API_ENDPOINTS.PRODUCTS.FEATURED("new")
-    );
+    return axiosClient.get(API_ENDPOINTS.DISCOVERY.PRODUCTS.FEATURED("new"));
+  },
+};
+
+// 📂 STAFF (ROLE_STAFF & ROLE_ADMIN)
+export const staffProductsApi = {
+  getAll: async (params?: any): Promise<Product[]> => {
+    return axiosClient.get(API_ENDPOINTS.STAFF.PRODUCTS, { params });
+  },
+
+  create: async (data: any): Promise<Product> => {
+    return axiosClient.post(API_ENDPOINTS.STAFF.PRODUCTS, data);
+  },
+
+  update: async (id: string, data: any): Promise<Product> => {
+    return axiosClient.put(API_ENDPOINTS.STAFF.PRODUCT_ID(id), data);
+  },
+
+  delete: async (id: string): Promise<void> => {
+    return axiosClient.delete(API_ENDPOINTS.STAFF.PRODUCT_ID(id));
+  },
+
+  updateStatus: async (id: string, status: boolean): Promise<any> => {
+    return axiosClient.patch(API_ENDPOINTS.STAFF.PRODUCT_STATUS(id), { status });
   },
 };

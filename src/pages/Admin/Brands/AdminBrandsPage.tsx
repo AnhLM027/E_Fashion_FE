@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { adminBrandApi } from "@/features/admin/api/adminBrandApi";
 import { Plus, Trash2, Search, Pencil, Copy } from "lucide-react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 interface Brand {
   id: string;
@@ -10,6 +11,8 @@ interface Brand {
 }
 
 export default function AdminBrandsPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
   const [brands, setBrands] = useState<Brand[]>([]);
 
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
@@ -101,13 +104,15 @@ export default function AdminBrandsPage() {
             </p>
           </div>
 
-          <button
-            onClick={() => setIsOpen(true)}
-            className="flex items-center gap-2 bg-black text-white px-5 py-3 rounded-xl hover:bg-gray-800 transition shadow"
-          >
-            <Plus size={18} />
-            Add Brand
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setIsOpen(true)}
+              className="flex items-center gap-2 bg-black text-white px-5 py-3 rounded-xl hover:bg-gray-800 transition shadow"
+            >
+              <Plus size={18} />
+              Add Brand
+            </button>
+          )}
         </div>
 
         {/* SEARCH */}
@@ -177,23 +182,25 @@ export default function AdminBrandsPage() {
                   </div>
                 </div>
 
-                <div className="mt-5 flex justify-center gap-4">
-                  <button
-                    onClick={() => handleEdit(brand)}
-                    className="flex items-center gap-1 text-sm text-gray-400 hover:text-blue-500 transition opacity-0 group-hover:opacity-100"
-                  >
-                    <Pencil size={14} />
-                    Edit
-                  </button>
+                {isAdmin && (
+                  <div className="mt-5 flex justify-center gap-4">
+                    <button
+                      onClick={() => handleEdit(brand)}
+                      className="flex items-center gap-1 text-sm text-gray-400 hover:text-blue-500 transition opacity-0 group-hover:opacity-100"
+                    >
+                      <Pencil size={14} />
+                      Edit
+                    </button>
 
-                  <button
-                    onClick={() => handleDelete(brand.id)}
-                    className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-500 transition opacity-0 group-hover:opacity-100"
-                  >
-                    <Trash2 size={14} />
-                    Delete
-                  </button>
-                </div>
+                    <button
+                      onClick={() => handleDelete(brand.id)}
+                      className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-500 transition opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 size={14} />
+                      Delete
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

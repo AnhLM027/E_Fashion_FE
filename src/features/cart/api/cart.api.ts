@@ -4,7 +4,7 @@ import type { CartResponse } from "../types/cart.type";
 
 export const cartApi = {
   async addItem(productVariantSizeId: string, quantity: number): Promise<CartResponse> {
-    const res = await axios.post<CartResponse>(API_ENDPOINTS.CART.ADD_ITEM, {
+    const res = await axios.post<CartResponse>(API_ENDPOINTS.CUSTOMER.CART_ITEMS, {
       productVariantSizeId,
       quantity,
     });
@@ -12,12 +12,12 @@ export const cartApi = {
   },
 
   async getCart(): Promise<CartResponse> {
-    const res = await axios.get<CartResponse>(API_ENDPOINTS.CART.GET);
+    const res = await axios.get<CartResponse>(API_ENDPOINTS.CUSTOMER.CARTS);
     return res;
   },
 
   async updateQuantity(productVariantSizeId: string, quantity: number) {
-    const res = await axios.put<CartResponse>(API_ENDPOINTS.CART.UPDATE_ITEM(productVariantSizeId),
+    const res = await axios.put<CartResponse>(API_ENDPOINTS.CUSTOMER.CART_ITEM(productVariantSizeId),
       null,
       {
         params: { quantity },
@@ -30,7 +30,7 @@ export const cartApi = {
     newVariantSizeId: string
   ): Promise<CartResponse> {
     const res = await axios.put<CartResponse>(
-      API_ENDPOINTS.CART.CHANGE_VARIANT,
+      API_ENDPOINTS.CUSTOMER.CART_ITEMS_CHANGE,
       {
         oldVariantSizeId,
         newVariantSizeId,
@@ -41,7 +41,7 @@ export const cartApi = {
   },
 
   async removeItem(productVariantSizeId: string) {
-    const res = await axios.delete(API_ENDPOINTS.CART.REMOVE_ITEM(productVariantSizeId));
+    const res = await axios.delete(API_ENDPOINTS.CUSTOMER.CART_ITEM(productVariantSizeId));
     return res;
   },
 };

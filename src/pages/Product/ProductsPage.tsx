@@ -2,17 +2,20 @@ import { useMemo, useState, useCallback } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { ChevronRight, SlidersHorizontal, X } from "lucide-react";
 
+import { ROUTES } from "@/config/routes";
 import { ProductsFilter } from "@/features/products/components/ProductsFilter";
 import { ProductsGrid } from "@/features/products/components/ProductsGrid";
 import { ProductsSort } from "@/features/products/components/ProductsSort";
 import { useProducts } from "@/features/products/hooks/useProducts";
 import { type SortKey, sortProducts } from "@/utils/sortProducts";
-import { useCategoryTree, type Category } from "@/hooks/useCategoryTree";
+import { useCategoryTree } from "@/hooks/useCategoryTree";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function ProductsPage() {
   const { "*": fullSlug } = useParams();
   const [searchParams] = useSearchParams();
   const [sortKey, setSortKey] = useState<SortKey>("name-asc");
+  const [page, setPage] = useState(0);
 
   // ================= LOGIC FILTERS =================
   const keyword = searchParams.get("q") || "";
@@ -60,7 +63,7 @@ export default function ProductsPage() {
     ],
   );
 
-  const { products, loading } = useProducts(filters);
+  const { products, loading, totalElements, totalPages } = useProducts(filters, page);
   const sortedProducts = useMemo(
     () => sortProducts(products, sortKey),
     [products, sortKey],
@@ -97,7 +100,6 @@ export default function ProductsPage() {
       const name = getDisplayName(selectedCategories[0]);
       return `Danh mục "${name}"`
     }
-    // const name = getDisplayName(fullSlug);
     return "Tất cả sản phẩm";
   }, [fullSlug, keyword, getDisplayName]);
 
@@ -106,12 +108,12 @@ export default function ProductsPage() {
       {/* BREADCRUMBS */}
       <nav className="border-b border-zinc-100">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-2 text-[11px] font-medium tracking-widest text-zinc-400">
-          <Link to="/" className="hover:text-black transition">
+          <Link to={ROUTES.HOME} className="hover:text-black transition">
             Trang chủ
           </Link>
           <ChevronRight size={10} strokeWidth={3} className="text-zinc-300" />
           <Link
-            to="/products"
+            to={ROUTES.PRODUCTS}
             className="hover:text-black transition"
           >
             Cửa hàng
@@ -119,7 +121,7 @@ export default function ProductsPage() {
 
           {fullSlug?.split("/").map((_, index, arr) => {
             const accumulatedSlug = arr.slice(0, index + 1).join("/");
-            const path = `/products/category/${accumulatedSlug}`;
+            const path = ROUTES.productsByCategory(accumulatedSlug);
             const isLast = index === arr.length - 1;
             const displayName = getDisplayName(accumulatedSlug);
 
@@ -160,7 +162,7 @@ export default function ProductsPage() {
                 {categoryTitle}
               </h1>
               <p className="text-[12px] text-zinc-400 font-medium uppercase tracking-widest">
-                {sortedProducts.length} items
+                {totalElements} sản phẩm
               </p>
             </div>
             <div className="pt-4 md:pt-0">
@@ -184,7 +186,7 @@ export default function ProductsPage() {
                   selectedCategories.length > 0 ||
                   selectedBrands.length > 0) && (
                   <button
-                    onClick={() => (window.location.href = "/products")}
+                    onClick={() => (window.location.href = ROUTES.PRODUCTS)}
                     className="group flex items-center gap-2 text-[10px] uppercase tracking-widest text-zinc-400 hover:text-black transition-colors"
                   >
                     <X
@@ -210,7 +212,19 @@ export default function ProductsPage() {
                   ))}
                 </div>
               ) : sortedProducts.length > 0 ? (
-                <ProductsGrid products={sortedProducts} loading={loading} />
+                <>
+                  <ProductsGrid products={sortedProducts} loading={loading} />
+                  
+                  <Pagination 
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={(p) => {
+                      setPage(p);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="mt-12 border-t border-zinc-100"
+                  />
+                </>
               ) : (
                 <div className="py-32 text-center border border-zinc-100 rounded-sm">
                   <p className="text-zinc-400 text-[11px] uppercase tracking-[0.2em]">

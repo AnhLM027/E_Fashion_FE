@@ -1,4 +1,5 @@
 import axiosClient from "@/lib/axiosClient";
+import { API_ENDPOINTS } from "@/config/api.config";
 import { ChatSenderType, ChatMessageType } from "@/features/chat/types/chat.types";
 
 export interface ChatMessage {
@@ -35,7 +36,7 @@ export const chatApi = {
     }
 
     return axiosClient.post(
-      "/api/chat/session",
+      API_ENDPOINTS.DISCOVERY.CHAT_SESSION,
       null,
       {
         params: guestId ? { guestId } : {},
@@ -55,7 +56,7 @@ export const chatApi = {
       }
     }
 
-    return axiosClient.get("/api/chat/session", {
+    return axiosClient.get(API_ENDPOINTS.DISCOVERY.CHAT_SESSION, {
       params: guestId ? { guestId } : {},
     });
   },
@@ -65,7 +66,7 @@ export const chatApi = {
     formData.append("file", file);
 
     const res = await axiosClient.post(
-      "/api/chat/upload",
+      API_ENDPOINTS.DISCOVERY.CHAT_UPLOAD,
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
@@ -79,17 +80,17 @@ export const chatApi = {
   getMessages: async (
     sessionId: string
   ): Promise<ChatMessage[]> => {
-    return axiosClient.get(`/api/chat/${sessionId}/messages`);
+    return axiosClient.get(API_ENDPOINTS.DISCOVERY.CHAT_MESSAGES(sessionId));
   },
 
   markAsRead: async (sessionId: string): Promise<void> => {
     return axiosClient.post(
-      `/api/chat/sessions/${sessionId}/read`
+      API_ENDPOINTS.DISCOVERY.CHAT_READ(sessionId)
     );
   },
 
   mergeGuestSession: async (guestId: string) => {
-    return axiosClient.post("/api/chat/merge", null, {
+    return axiosClient.post(API_ENDPOINTS.DISCOVERY.CHAT_MERGE, null, {
       params: { guestId },
     });
   },
@@ -101,7 +102,7 @@ export const chatApi = {
     comment: string
   ): Promise<void> => {
     return axiosClient.post(
-      `/api/chat/${sessionId}/feedback`,
+      API_ENDPOINTS.DISCOVERY.CHAT_FEEDBACK(sessionId),
       null,
       {
         params: { rating, comment },

@@ -11,54 +11,53 @@ import type {
 } from "../types/auth.type";
 
 export const authApi = {
+  // 📂 DISCOVERY (Public/Auth)
   login: async (data: LoginRequest): Promise<LoginResponse> => {
-    return axiosClient.post(API_ENDPOINTS.AUTH.LOGIN, data);
+    return axiosClient.post(API_ENDPOINTS.DISCOVERY.AUTH.LOGIN, data);
   },
 
   register: async (data: RegisterRequest): Promise<RegisterResponse> => {
-    return axiosClient.post(API_ENDPOINTS.AUTH.REGISTER, data);
+    return axiosClient.post(API_ENDPOINTS.DISCOVERY.AUTH.REGISTER, data);
   },
 
   acceptAccount: async (token: string): Promise<void> => {
-    return axiosClient.post(API_ENDPOINTS.AUTH.ACCEPT_ACCOUNT, null, {
+    return axiosClient.post(API_ENDPOINTS.DISCOVERY.AUTH.ACCEPT_ACCOUNT, null, {
       params: { token },
     });
   },
 
-  profile: async (): Promise<LoginResponse["user"]> => {
-    return axiosClient.get(API_ENDPOINTS.USER.PROFILE);
-  },
-
-  updateProfile: async (
-    data: UpdateProfileRequest
-  ): Promise<LoginResponse["user"]> => {
-    return axiosClient.put(API_ENDPOINTS.USER.PROFILE, data);
-  },
-
-  changePassword: async (
-    data: UpdatePasswordRequest
-  ): Promise<void> => {
-    return axiosClient.put(
-      `${API_ENDPOINTS.USER.PROFILE}/password`,
-      data
-    );
-  },
-
   logout: async (): Promise<void> => {
-    return axiosClient.post(API_ENDPOINTS.AUTH.LOGOUT);
+    return axiosClient.post(API_ENDPOINTS.DISCOVERY.AUTH.LOGOUT);
   },
 
   refreshToken: async (): Promise<void> => {
-    return axiosClient.post(API_ENDPOINTS.AUTH.REFRESH);
+    return axiosClient.post(API_ENDPOINTS.DISCOVERY.AUTH.REFRESH);
   },
 
   forgotPassword: async (email: string): Promise<void> => {
-    return axiosClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, null, {
+    return axiosClient.post(API_ENDPOINTS.DISCOVERY.AUTH.FORGOT_PASSWORD, null, {
       params: { email },
     });
   },
 
   resetPassword: async (data: ResetPasswordRequest): Promise<void> => {
-    return axiosClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, data);
+    return axiosClient.post(API_ENDPOINTS.DISCOVERY.AUTH.RESET_PASSWORD, data);
+  },
+
+  // 📂 CUSTOMER (Private Profile)
+  profile: async (): Promise<LoginResponse["user"]> => {
+    return axiosClient.get(API_ENDPOINTS.CUSTOMER.PROFILE);
+  },
+
+  updateProfile: async (
+    data: UpdateProfileRequest
+  ): Promise<LoginResponse["user"]> => {
+    return axiosClient.put(API_ENDPOINTS.CUSTOMER.PROFILE, data);
+  },
+
+  changePassword: async (
+    data: UpdatePasswordRequest
+  ): Promise<void> => {
+    return axiosClient.put(API_ENDPOINTS.CUSTOMER.CHANGE_PASSWORD, data);
   },
 };

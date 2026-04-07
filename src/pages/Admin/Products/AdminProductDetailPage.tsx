@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { adminProductApi } from "@/features/admin/api/adminProductApi";
 import { adminVariantApi } from "@/features/admin/api/adminVariantApi";
 import { adminVariantSizeApi } from "@/features/admin/api/adminVariantSizeApi";
 import { adminImageApi } from "@/features/admin/api/adminVariantImageApi";
 import { adminColorApi } from "@/features/admin/api/adminColorApi";
-
-import RichTextEditor from "@/components/layout/RichTextEditor/RichTextEditor";
-
+import { ArrowLeft, Plus, Edit2, Trash2, Check, X, ImageIcon, Maximize2 } from "lucide-react";
 import { formatNumber, parseFormattedNumber } from "@/utils/format";
 
 /* ================= TYPES ================= */
@@ -52,23 +50,18 @@ export interface VariantImage {
 
 const AdminProductDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [sizes, setSizes] = useState<ProductVariantSize[]>([]);
   const [images, setImages] = useState<Record<string, VariantImage[]>>({});
   const [colors, setColors] = useState<ColorResponseDTO[]>([]);
 
-  const [description, setDescription] = useState("");
-
   const [loading, setLoading] = useState(true);
 
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
-  const [selectedVariantForImage, setSelectedVariantForImage] = useState<
-    string | null
-  >(null);
-  const [selectedVariantForSize, setSelectedVariantForSize] = useState<
-    string | null
-  >(null);
+  const [selectedVariantForImage, setSelectedVariantForImage] = useState<string | null>(null);
+  const [selectedVariantForSize, setSelectedVariantForSize] = useState<string | null>(null);
 
   const [editingSizeId, setEditingSizeId] = useState<string | null>(null);
 
@@ -81,7 +74,7 @@ const AdminProductDetailPage = () => {
 
   const [form, setForm] = useState({
     colorId: "",
-    isActive: false,
+    isActive: true,
   });
 
   const [sizeForm, setSizeForm] = useState({
@@ -122,8 +115,6 @@ const AdminProductDetailPage = () => {
         brandName: product.brandName || "",
         categoryName: product.categoryName || "",
       });
-
-      setDescription(product.description || "");
 
       const variantList = variantRes.data ?? variantRes;
       setVariants(variantList);
@@ -174,20 +165,16 @@ const AdminProductDetailPage = () => {
 
       setIsOpen(false);
       setEditingVariantId(null);
-      setForm({ colorId: "", isActive: false });
+      setForm({ colorId: "", isActive: true });
       fetchData();
     } catch (err) {
       console.error(err);
     }
   };
 
-  const openImageViewer = (url: string) => {
-    setPreviewImage(url);
-  };
-
   const openCreateModal = () => {
     setEditingVariantId(null);
-    setForm({ colorId: "", isActive: false });
+    setForm({ colorId: "", isActive: true });
     setIsOpen(true);
   };
 
@@ -201,34 +188,6 @@ const AdminProductDetailPage = () => {
   };
 
   /* ================= SIZE ================= */
-
-  // const handleCreateSize = async () => {
-  //   if (!selectedVariantForSize) return;
-
-  //   try {
-  //     await adminVariantSizeApi.create({
-  //       productVariantId: selectedVariantForSize,
-  //       sizeName: sizeForm.sizeName,
-  //       sku: sizeForm.sku,
-  //       originalPrice: parseFormattedNumber(sizeForm.originalPrice),
-  //       salePrice: parseFormattedNumber(sizeForm.salePrice),
-  //       stock: Number(sizeForm.stock),
-  //     });
-
-  //     setIsSizeOpen(false);
-  //     setSizeForm({
-  //       sizeName: "",
-  //       sku: "",
-  //       originalPrice: "",
-  //       salePrice: "",
-  //       stock: "",
-  //     });
-
-  //     fetchData();
-  //   } catch (err) {
-  //     console.error(err);
-  //   }
-  // };
 
   const handleSubmitSize = async () => {
     if (!selectedVariantForSize) return;
@@ -330,20 +289,12 @@ const AdminProductDetailPage = () => {
     if (!window.confirm("Delete this size?")) return;
 
     try {
-      // 1️⃣ Xoá size
       await adminVariantSizeApi.delete(sizeId);
-
-      // 2️⃣ Kiểm tra còn size nào của variant này không
       const remainingRes = await adminVariantSizeApi.getByVariant(variantId);
-
       const remainingSizes = remainingRes.data ?? remainingRes;
 
-      let variantStillActive = true;
-
       if (!remainingSizes || remainingSizes.length === 0) {
-        // 3️⃣ Inactivate variant
         const variant = variants.find((v) => v.id === variantId);
-
         if (variant) {
           await adminVariantApi.update(variantId, {
             productId: variant.productId,
@@ -351,19 +302,13 @@ const AdminProductDetailPage = () => {
             isActive: false,
           });
         }
-
-        variantStillActive = false;
       }
 
-      // 4️⃣ Kiểm tra tất cả variant của product
       const variantRes = await adminVariantApi.getByProduct(id!);
-
       const allVariants = variantRes.data ?? variantRes;
-
       const anyActive = allVariants.some((v: any) => v.isActive);
 
       if (!anyActive) {
-        // 5️⃣ Inactivate product
         await adminProductApi.update(id!, {
           isActive: false,
         });
@@ -377,46 +322,22 @@ const AdminProductDetailPage = () => {
 
   const handleDeleteVariant = async (variant: ProductVariant) => {
     if (!id) return;
-    if (
-      !window.confirm(
-        "Bạn có chắc muốn xóa variant này không?",
-      )
-    )
-      return;
+    if (!window.confirm("Are you sure you want to delete this variant? This will also delete all its sizes and images.")) return;
 
     try {
-      // 1. Xoá toàn bộ size của variant
       const sizeRes = await adminVariantSizeApi.getByVariant(variant.id);
       const variantSizes: ProductVariantSize[] = sizeRes.data ?? sizeRes;
-
-      console.log("Size")
-
       for (const size of variantSizes) {
         await adminVariantSizeApi.delete(size.id);
       }
 
-      // 2. Xoá toàn bộ image của variant
       const imageRes = await adminImageApi.getByVariant(variant.id);
       const variantImages: VariantImage[] = imageRes.data ?? imageRes;
-
       for (const img of variantImages) {
         await adminImageApi.delete(variant.id, img.id);
       }
 
-      // 3. Xoá variant
       await adminVariantApi.hardDelete(variant.id);
-      console.log(variant.id)
-
-      // 4. Kiểm tra nếu không còn variant active → inactive product
-      const variantRes = await adminVariantApi.getByProduct(id);
-      const allVariants: ProductVariant[] = variantRes.data ?? variantRes;
-
-      const anyActive = allVariants.some((v) => v.isActive);
-
-      if (!anyActive) {
-        // await adminProductApi.update(id, { isActive: false });
-      }
-
       fetchData();
     } catch (err) {
       console.error(err);
@@ -426,398 +347,313 @@ const AdminProductDetailPage = () => {
   /* ================= RENDER ================= */
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen space-y-10">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">{productInfo.name}</h1>
-          <p className="text-sm text-gray-500">
-            {productInfo.brandName} • {productInfo.categoryName}
-          </p>
+    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-zinc-100 rounded-lg transition-colors text-zinc-500"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-zinc-900">{productInfo.name}</h1>
+            <p className="text-sm text-zinc-500 font-medium">
+              {productInfo.brandName} • {productInfo.categoryName}
+            </p>
+          </div>
         </div>
       </div>
 
       {loading ? (
-        <div>Loading...</div>
+        <div className="py-20 text-center text-zinc-400 italic">Synchronizing product data...</div>
       ) : (
-        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
-          <div className="flex justify-between mb-6">
-            <h2 className="text-xl font-semibold">Product Variants</h2>
-            <button
-              onClick={openCreateModal}
-              className="px-4 py-2 bg-black text-white rounded"
-            >
-              + Add Variant
-            </button>
+        <div className="space-y-8">
+          {/* VARIANTS SECTION */}
+          <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-wider">Product Variants</h2>
+              <button
+                onClick={openCreateModal}
+                className="flex items-center gap-1.5 bg-zinc-900 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-zinc-800 transition-all uppercase tracking-widest"
+              >
+                <Plus size={14} />
+                Add New Variant
+              </button>
           </div>
 
-          {variants.map((variant) => {
-            const variantSizes = sizes.filter(
-              (s) => s.productVariantId === variant.id,
-            );
+          <div className="grid gap-8">
+            {variants.map((variant) => {
+              const variantSizes = sizes.filter((s) => s.productVariantId === variant.id);
+              const variantImages = images[variant.id] || [];
 
-            return (
-              <div key={variant.id} className="border rounded-xl p-6 mb-8">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-semibold text-lg flex items-center gap-3">
-                      {/* Ô màu */}
-                      <span
-                        className="w-5 h-5 rounded-full border shadow-sm"
+              return (
+                <div key={variant.id} className="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  {/* VARIANT HEADER */}
+                  <div className="px-6 py-4 bg-zinc-50/50 border-b border-zinc-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="w-8 h-8 rounded-full border border-zinc-300 shadow-inner"
                         style={{ backgroundColor: variant.colorCode }}
                       />
-
-                      {/* Tên màu */}
-                      <span>
-                        {variant.colorName}
-                        <span className="text-sm text-gray-400 ml-2">
-                          ({variant.colorCode})
-                        </span>
-                      </span>
-                    </h3>
-                    <span
-                      className={`px-3 py-1 text-xs font-medium rounded-full ${
-                        variant.isActive
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-600"
-                      }`}
-                    >
-                      {variant.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openEditModal(variant)}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm"
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      onClick={() => handleDeleteVariant(variant)}
-                      className="px-3 py-1 bg-red-100 text-red-600 rounded text-sm"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-
-                {/* Sizes */}
-                <div className="mb-6">
-                  <div className="flex justify-between mb-2">
-                    <h4 className="font-medium">Sizes</h4>
-                    <button
-                      onClick={() => {
-                        setSelectedVariantForSize(variant.id);
-                        setIsSizeOpen(true);
-                      }}
-                      className="px-3 py-1 bg-black text-white rounded text-xs"
-                    >
-                      + Add Size
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {variantSizes.map((size) => (
-                      <div
-                        key={size.id}
-                        className="border p-4 rounded-xl bg-gray-50 relative group hover:shadow-sm transition"
-                      >
-                        {/* Actions */}
-                        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition">
-                          <button
-                            onClick={() => openEditSizeModal(size)}
-                            className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
-                          >
-                            Edit
-                          </button>
-
-                          <button
-                            onClick={() =>
-                              handleDeleteSize(size.id, size.productVariantId)
-                            }
-                            className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded"
-                          >
-                            Delete
-                          </button>
-                        </div>
-
-                        <p className="font-semibold">{size.sizeName}</p>
-                        <p className="text-xs text-gray-500">SKU: {size.sku}</p>
-                        <p className="text-sm">
-                          {formatNumber(size.salePrice)} ₫
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Stock: {size.stock}
+                      <div>
+                        <h3 className="font-bold text-zinc-900 leading-none">
+                          {variant.colorName}
+                        </h3>
+                        <p className="text-[10px] font-bold text-zinc-400 mt-1 uppercase tracking-widest">
+                          {variant.colorCode}
                         </p>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <div className={`ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        variant.isActive ? "bg-green-50 text-green-700" : "bg-rose-50 text-rose-700"
+                      }`}>
+                         <div className={`w-1 h-1 rounded-full ${variant.isActive ? "bg-green-500" : "bg-rose-500"}`} />
+                         {variant.isActive ? "Active" : "Inactive"}
+                      </div>
+                    </div>
 
-                {/* Images */}
-                <div>
-                  <div className="flex justify-between mb-3">
-                    <h4 className="font-medium">Images</h4>
-                    <button
-                      onClick={() => {
-                        setSelectedVariantForImage(variant.id);
-                        setIsImageOpen(true);
-                      }}
-                      className="px-3 py-1 bg-black text-white rounded text-xs"
-                    >
-                      + Add Image
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-                    {(images[variant.id] || []).map((img) => (
-                      <div
-                        key={img.id}
-                        className="relative border rounded-2xl overflow-hidden bg-white"
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openEditModal(variant)}
+                        className="p-2 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-all"
+                        title="Edit Variant"
                       >
-                        <img
-                          src={img.imageUrl}
-                          alt=""
-                          onClick={() => openImageViewer(img.imageUrl)}
-                          className="w-full h-40 object-cover cursor-zoom-in"
-                        />
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteVariant(variant)}
+                        className="p-2 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                        title="Delete Variant"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
 
-                        {img.isPrimary && (
-                          <span className="absolute top-3 left-3 bg-black text-white text-xs px-3 py-1 rounded-full">
-                            Primary
-                          </span>
-                        )}
+                  <div className="p-6 grid lg:grid-cols-2 gap-10">
+                    {/* SIZES */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Inventory & Sizes</h4>
+                        <button
+                          onClick={() => { setSelectedVariantForSize(variant.id); setIsSizeOpen(true); }}
+                          className="text-[10px] font-bold text-zinc-900 hover:underline uppercase tracking-widest"
+                        >
+                          + Add Size
+                        </button>
+                      </div>
 
-                        <div className="flex justify-between p-3 border-t bg-gray-50">
-                          {!img.isPrimary && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {variantSizes.map((size) => (
+                          <div key={size.id} className="group relative border border-zinc-100 bg-zinc-50/50 p-3 rounded-lg hover:border-zinc-300 hover:bg-white transition-all">
                             <button
-                              onClick={() =>
-                                handleSetPrimary(variant.id, img.id)
-                              }
-                              className="text-xs text-black font-medium"
+                              onClick={() => openEditSizeModal(size)}
+                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-zinc-900 transition-all"
                             >
-                              Set Primary
+                              <Edit2 size={12} />
                             </button>
-                          )}
-
-                          <button
-                            onClick={() =>
-                              handleDeleteImage(variant.id, img.id)
-                            }
-                            className="text-xs text-red-500 font-medium"
-                          >
-                            Delete
-                          </button>
-                        </div>
+                            <div className="text-sm font-bold text-zinc-900">{size.sizeName}</div>
+                            <div className="text-[10px] text-zinc-500 font-medium mb-2">{size.sku}</div>
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-xs font-bold text-zinc-900">{size.salePrice.toLocaleString()}₫</span>
+                                <span className="text-[10px] text-zinc-400 line-through">{size.originalPrice.toLocaleString()}₫</span>
+                            </div>
+                            <div className={`mt-2 text-[10px] font-bold uppercase tracking-widest ${size.stock > 10 ? "text-zinc-400" : "text-rose-600"}`}>
+                                Stock: {size.stock}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+
+                    {/* IMAGES */}
+                    <div className="space-y-4">
+                       <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Visual Assets</h4>
+                        <button
+                          onClick={() => { setSelectedVariantForImage(variant.id); setIsImageOpen(true); }}
+                          className="text-[10px] font-bold text-zinc-900 hover:underline uppercase tracking-widest"
+                        >
+                          + Add Image
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {variantImages.map((img) => (
+                          <div key={img.id} className="group relative aspect-square border border-zinc-100 rounded-lg overflow-hidden bg-zinc-50">
+                            <img
+                              src={img.imageUrl}
+                              alt=""
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                            {img.isPrimary && (
+                              <div className="absolute top-1.5 left-1.5 bg-zinc-900 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                Primary
+                              </div>
+                            )}
+
+                            <div className="absolute inset-0 bg-zinc-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                                <button
+                                    onClick={() => setPreviewImage(img.imageUrl)}
+                                    className="p-1.5 bg-white text-zinc-900 rounded-full hover:bg-zinc-100"
+                                >
+                                    <Maximize2 size={12} />
+                                </button>
+                                <div className="flex gap-1.5">
+                                    {!img.isPrimary && (
+                                        <button
+                                            onClick={() => handleSetPrimary(variant.id, img.id)}
+                                            className="p-1.5 bg-white text-green-600 rounded-full hover:bg-zinc-100"
+                                        >
+                                            <Check size={12} />
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => handleDeleteImage(variant.id, img.id)}
+                                        className="p-1.5 bg-white text-rose-600 rounded-full hover:bg-zinc-100"
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
 
-      {/* ================= VARIANT MODAL ================= */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl w-[400px] space-y-4">
-            <h3 className="text-lg font-semibold">
-              {editingVariantId ? "Update Variant" : "Create Variant"}
-            </h3>
-
-            <select
-              className="w-full border p-2 rounded"
-              value={form.colorId}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  colorId: e.target.value,
-                }))
-              }
-            >
-              <option value="">Select Color</option>
-              {colors.map((color) => (
-                <option key={color.id} value={color.id}>
-                  {color.name} ({color.code})
-                </option>
-              ))}
-            </select>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="px-4 py-2 border rounded"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleSubmitVariant}
-                className="px-4 py-2 bg-black text-white rounded"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= SIZE MODAL ================= */}
-      {isSizeOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl w-[400px] space-y-4">
-            <h3 className="text-lg font-semibold">
-              {editingSizeId ? "Update Size" : "Add Size"}
-            </h3>
-
-            <input
-              className="w-full border p-2 rounded"
-              placeholder="Size Name (M, L, XL...)"
-              value={sizeForm.sizeName}
-              onChange={(e) =>
-                setSizeForm((prev) => ({
-                  ...prev,
-                  sizeName: e.target.value,
-                }))
-              }
-            />
-
-            <input
-              className="w-full border p-2 rounded"
-              placeholder="SKU"
-              value={sizeForm.sku}
-              onChange={(e) =>
-                setSizeForm((prev) => ({
-                  ...prev,
-                  sku: e.target.value,
-                }))
-              }
-            />
-
-            <input
-              className="w-full border p-2 rounded"
-              placeholder="Original Price"
-              value={sizeForm.originalPrice}
-              onChange={(e) =>
-                setSizeForm((prev) => ({
-                  ...prev,
-                  originalPrice: formatNumber(
-                    parseFormattedNumber(e.target.value),
-                  ),
-                }))
-              }
-            />
-
-            <input
-              className="w-full border p-2 rounded"
-              placeholder="Sale Price"
-              value={sizeForm.salePrice}
-              onChange={(e) =>
-                setSizeForm((prev) => ({
-                  ...prev,
-                  salePrice: formatNumber(parseFormattedNumber(e.target.value)),
-                }))
-              }
-            />
-
-            <input
-              className="w-full border p-2 rounded"
-              placeholder="Stock"
-              type="number"
-              value={sizeForm.stock}
-              onChange={(e) =>
-                setSizeForm((prev) => ({
-                  ...prev,
-                  stock: e.target.value,
-                }))
-              }
-            />
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setIsSizeOpen(false);
-                  setEditingSizeId(null);
-                }}
-                className="px-4 py-2 border rounded"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleSubmitSize}
-                className="px-4 py-2 bg-black text-white rounded"
-              >
-                {editingSizeId ? "Update" : "Save"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= IMAGE MODAL ================= */}
-      {isImageOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl w-[400px] space-y-4">
-            <h3 className="text-lg font-semibold">Add Variant Image</h3>
-
-            <input
-              className="w-full border p-2 rounded"
-              placeholder="Image URL"
-              value={newImageUrl}
-              onChange={(e) => setNewImageUrl(e.target.value)}
-            />
-
-            {newImageUrl && (
-              <img
-                src={newImageUrl}
-                className="w-full h-40 object-cover rounded"
-              />
+            {variants.length === 0 && (
+                 <div className="py-20 text-center bg-white border border-dashed border-zinc-200 rounded-xl">
+                    <ImageIcon size={40} className="mx-auto text-zinc-200 mb-4" />
+                    <p className="text-sm text-zinc-400 font-medium">No variants defined for this product</p>
+                 </div>
             )}
+          </div>
+        </div>
+      )}
 
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setIsImageOpen(false)}
-                className="px-4 py-2 border rounded"
-              >
-                Cancel
-              </button>
+      {/* ================= MODALS ================= */}
 
-              <button
-                onClick={handleCreateImage}
-                className="px-4 py-2 bg-black text-white rounded"
-              >
-                Save
-              </button>
+       {/* VARIANT MODAL */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-zinc-200 flex justify-between items-center bg-zinc-50/50">
+              <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-widest">
+                {editingVariantId ? "Update Variant" : "Create New Variant"}
+              </h3>
+              <button onClick={() => setIsOpen(false)} className="text-zinc-400 hover:text-zinc-900 p-1"><X size={18} /></button>
+            </div>
+            <div className="p-6 space-y-4">
+                <div>
+                     <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 block">Select Color</label>
+                     <select
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all cursor-pointer"
+                        value={form.colorId}
+                        onChange={(e) => setForm((prev) => ({ ...prev, colorId: e.target.value }))}
+                        >
+                        <option value="">-- Choose Color --</option>
+                        {colors.map((color) => (
+                            <option key={color.id} value={color.id}>
+                            {color.name} ({color.code})
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="flex items-center justify-between border border-zinc-200 rounded-lg px-4 py-2">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Status Active</span>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, isActive: !form.isActive })}
+                      className={`w-10 h-5 rounded-full relative transition-colors ${form.isActive ? "bg-green-500" : "bg-zinc-300"}`}
+                    >
+                      <span className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${form.isActive ? "translate-x-5" : ""}`} />
+                    </button>
+                  </div>
+            </div>
+            <div className="px-6 py-4 border-t border-zinc-200 bg-zinc-50/50 flex justify-end gap-3">
+                  <button onClick={() => setIsOpen(false)} className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-4 py-2">Cancel</button>
+                  <button onClick={handleSubmitVariant} className="bg-zinc-900 text-white px-6 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800">Save Variant</button>
             </div>
           </div>
         </div>
       )}
 
-      {previewImage && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
-          onClick={() => setPreviewImage(null)}
-        >
-          <div
-            className="relative max-w-5xl w-full px-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setPreviewImage(null)}
-              className="absolute -top-12 right-6 text-white text-2xl"
-            >
-              ✕
-            </button>
-
-            <img
-              src={previewImage}
-              className="w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl"
-            />
+      {/* SIZE MODAL */}
+      {isSizeOpen && (
+        <div className="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+             <div className="px-6 py-4 border-b border-zinc-200 flex justify-between items-center bg-zinc-50/50">
+              <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-widest">
+                {editingSizeId ? "Update Inventory Item" : "Add Inventory Item"}
+              </h3>
+              <button onClick={() => { setIsSizeOpen(false); setEditingSizeId(null); }} className="text-zinc-400 hover:text-zinc-900 p-1"><X size={18} /></button>
+            </div>
+            <div className="p-6 grid grid-cols-2 gap-4">
+                <div className="col-span-1 text-[13px] font-medium">
+                     <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 block">Size Tag</label>
+                     <input className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all"
+                            placeholder="M, L, XL..." value={sizeForm.sizeName} onChange={(e) => setSizeForm((prev) => ({ ...prev, sizeName: e.target.value }))} />
+                </div>
+                <div className="col-span-1">
+                     <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 block">SKU Code</label>
+                     <input className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 font-mono text-[11px] focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all"
+                            placeholder="SKU-XXX-..." value={sizeForm.sku} onChange={(e) => setSizeForm((prev) => ({ ...prev, sku: e.target.value }))} />
+                </div>
+                <div>
+                     <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 block">Original Price</label>
+                     <input className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all"
+                            value={sizeForm.originalPrice} onChange={(e) => setSizeForm((prev) => ({ ...prev, originalPrice: formatNumber(parseFormattedNumber(e.target.value)) }))} />
+                </div>
+                <div>
+                     <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 block">Sale Price</label>
+                     <input className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all text-rose-600"
+                            value={sizeForm.salePrice} onChange={(e) => setSizeForm((prev) => ({ ...prev, salePrice: formatNumber(parseFormattedNumber(e.target.value)) }))} />
+                </div>
+                 <div className="col-span-2">
+                     <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 block">Stock Quantity</label>
+                     <input className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all"
+                            type="number" value={sizeForm.stock} onChange={(e) => setSizeForm((prev) => ({ ...prev, stock: e.target.value }))} />
+                </div>
+            </div>
+            <div className="px-6 py-4 border-t border-zinc-200 bg-zinc-50/50 flex justify-end gap-3">
+                  <button onClick={() => { setIsSizeOpen(false); setEditingSizeId(null); }} className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-4 py-2">Cancel</button>
+                  <button onClick={handleSubmitSize} className="bg-zinc-900 text-white px-6 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800">Confirm Size</button>
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* IMAGE MODAL */}
+      {isImageOpen && (
+        <div className="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+             <div className="px-6 py-4 border-b border-zinc-200 flex justify-between items-center bg-zinc-50/50">
+              <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-widest">Add Asset URL</h3>
+              <button onClick={() => setIsImageOpen(false)} className="text-zinc-400 hover:text-zinc-900 p-1"><X size={18} /></button>
+            </div>
+            <div className="p-6 space-y-4">
+                 <input className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-zinc-900 focus:outline-none transition-all"
+                        placeholder="https://..." value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} />
+                 {newImageUrl && <img src={newImageUrl} className="w-full h-48 object-cover rounded-lg border border-zinc-200 shadow-sm" />}
+            </div>
+             <div className="px-6 py-4 border-t border-zinc-200 bg-zinc-50/50 flex justify-end gap-3">
+                  <button onClick={() => setIsImageOpen(false)} className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-4 py-2">Cancel</button>
+                  <button onClick={handleCreateImage} className="bg-zinc-900 text-white px-6 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800">Add Asset</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW IMAGE */}
+      {previewImage && (
+        <div className="fixed inset-0 bg-zinc-900/90 backdrop-blur-md flex items-center justify-center z-[100] p-4" onClick={() => setPreviewImage(null)}>
+           <button className="absolute top-8 right-8 text-white hover:scale-110 transition-transform"><X size={32} /></button>
+           <img src={previewImage} className="max-w-full max-h-full rounded-lg shadow-2xl animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
